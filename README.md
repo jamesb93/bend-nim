@@ -29,6 +29,12 @@ We found that the best results for speed and binary size came with aggressive op
 
 `nim c -d:release -d:danger mosh.nim`
 
+## Usage
+
+Right now, the nimBend executable `mosh` only takes two arguments, an input file and an output file name. Example:
+
+`mosh cat.png output.wav`
+
 
 
 If you have any issues please raise one on the github!
