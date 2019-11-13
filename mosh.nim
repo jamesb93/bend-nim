@@ -1,4 +1,4 @@
-import os, streams, memfiles, parseopt
+import memfiles, parseopt
 
 var inputFile : string
 
@@ -50,31 +50,28 @@ proc createHeader(binarySize: uint32): wavHeader =
     result.subChunk2ID = ['d','a','t','a']
     result.subChunk2Size = binarySize
 
-proc openRawFile(filePath: string) : MemMapFileStream =
-    return newMemMapFileStream(filePath, fmRead)
+proc openRawFile(filePath: string) : MemFile =
+    return memfiles.open(filePath, fmRead)
 
-var fileSize = uint32(getFileSize(inputFile))
-var data = openRawFile(inputFile)
+let 
+    data = openRawFile(inputFile)
+    dataMem = data.mem
+    dataSize = data.size
 
-var header = createHeader(fileSize)
+    header = createHeader(uint32(dataSize))
 
-var outputStream : File
-discard outputStream.open("toy_output.wav", fmWrite)
+var outputFile : File
+discard outputFile.open("toy_output.wav", fmWrite)
 
+#Write header
 for value in header.fields:
     when value is array:
         for arrayVal in value:
-            discard outputStream.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
+            discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
     else:
-        discard outputStream.writeBuffer(unsafeAddr(value), sizeof(value))
+        discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
 
-var data_array : seq[uint8] = newSeq[uint8](fileSize)
+#Write actual content
+discard outputFile.writeBuffer(dataMem, (sizeof(uint8) * dataSize))
 
-var index = 0
-while not data.atEnd():
-    data_array[index] = readUint8(data)
-    index += 1
-
-discard outputStream.writeBytes(data_array, 0, fileSize)
-
-outputStream.close()
+outputFile.close()
