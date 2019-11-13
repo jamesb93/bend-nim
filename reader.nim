@@ -1,12 +1,15 @@
 import os, streams
 
-let inputFile= "/Users/james/dev/scrape/jongly.wav"
+when declared(commandLineParams):
+    var cliArgs = commandLineParams()
+
+var iFile = cliArgs[0]
 
 proc openRawFile(filePath: string): FileStream =
     return newFileStream(filePath, mode=fmRead)
 
-let fileSize = getFileSize(inputFile)
-var data = openRawFile(inputFile)
+let fileSize = getFileSize(iFile)
+var data = openRawFile(iFile)
 
 # http://soundfile.sapp.org/doc/WaveFormat/
 # RIFF chunk descriptor
