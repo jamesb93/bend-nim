@@ -1,5 +1,5 @@
 .DS_Store
 reader
 mosh
-jongly.wav
-gesture_maker.maxhelp
+*.wav
+*.maxhelp
