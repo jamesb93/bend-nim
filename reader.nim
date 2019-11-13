@@ -1,6 +1,6 @@
-import os, strutils, streams, memfiles
+import os, streams
 
-let inputFile= "/Users/james/dev/scrape/bent.wav"
+let inputFile= "/Users/james/dev/scrape/jongly.wav"
 
 proc openRawFile(filePath: string): FileStream =
     return newFileStream(filePath, mode=fmRead)
@@ -27,6 +27,16 @@ var bitDepth = readUint16(data)
 var subChunk2ID = readStr(data, 4)
 var subChunk2Size = readUint32(data)
 
-echo chunkSize
-echo subChunk1Size
-echo subChunk2Size
+echo "chunkID: ", chunkID
+echo "chunkSize: ", chunkSize
+echo "format: ", format
+echo "subChunk1ID: ", subChunk1ID
+echo "subChunk1Size: ", subChunk1Size
+echo "audioFormat: ", audioFormat
+echo "numChannels: ", numChannels
+echo "sampleRate: ", sampleRate
+echo "byteRate: ", byteRate
+echo "blockAlign: ", blockAlign
+echo "bitDepth: ", bitDepth
+echo "subChunk2ID: ", subChunk2ID
+echo "subChunk2Size: ", subChunk2size
