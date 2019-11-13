@@ -8,7 +8,6 @@ var iFile = cliArgs[0]
 proc openRawFile(filePath: string): FileStream =
     return newFileStream(filePath, mode=fmRead)
 
-let fileSize = getFileSize(iFile)
 var data = openRawFile(iFile)
 
 # http://soundfile.sapp.org/doc/WaveFormat/

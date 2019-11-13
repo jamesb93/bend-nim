@@ -16,19 +16,24 @@ type wavHeader* = object
     subChunk2ID*: array[4, char]
     subChunk2Size*: uint32
 
-proc createHeader*(binarySize: uint32): wavHeader =
+proc createHeader*(
+    binarySize: uint32,
+    kSampleRate: uint32,
+    kBitDepth: uint16,
+    kNumChannels: uint16
+): wavHeader =
     # Wav header structure
     result.chunkID = ['R','I','F','F']
     result.chunkSize = binarySize + fixedSize
     result.format = ['W','A','V','E']
     result.subChunk1ID = ['f','m','t',' ']
     result.subChunk1Size = 16
-    result.audioFormat = 1
-    result.numChannels = 1
-    result.sampleRate = 44100
-    result.byteRate = 44100 # sampleRate * numChannels * bitsPerSample / 8
-    result.blockAlign = 1
-    result.bitDepth = 8
+    result.audioFormat = kBitDepth == 32 ? 3 : 1
+    result.numChannels = kNumChannels
+    result.sampleRate = kSampleRate
+    result.byteRate = kSampleRate * kNumChannels * kBitDepth div 8
+    result.blockAlign = kNumChannels * kBitDepth div 8
+    result.bitDepth = kBitDepth
     result.subChunk2ID = ['d','a','t','a']
     result.subChunk2Size = binarySize
 

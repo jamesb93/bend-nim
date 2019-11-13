@@ -33,8 +33,12 @@ let
     data = openRawFile(iFile)
     dataMem = data.mem
     dataSize = data.size
-
-    header = createHeader(uint32(dataSize))
+    header = createHeader(
+        uint32(dataSize),
+        44100,
+        8,
+        1
+        )
 
 var outputFile : File
 discard outputFile.open(oFile, fmWrite)
