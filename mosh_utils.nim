@@ -28,7 +28,10 @@ proc createHeader*(
     result.format = ['W','A','V','E']
     result.subChunk1ID = ['f','m','t',' ']
     result.subChunk1Size = 16
-    result.audioFormat = kBitDepth == 32 ? 3 : 1
+    if kBitDepth == 32:
+        result.audioFormat = 3
+    else:
+        result.audioFormat = 1
     result.numChannels = kNumChannels
     result.sampleRate = kSampleRate
     result.byteRate = kSampleRate * kNumChannels * kBitDepth div 8
