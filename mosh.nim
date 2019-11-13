@@ -3,18 +3,7 @@ import os, streams, parseopt, mosh_utils
 var inputFile : string
 var argCtr : int
 
-#Command line arg: e.g. ./mosh ./whatever.txt
-for kind, key, value in getOpt():
-    case kind
-        of cmdArgument:
-            inputFile = key
-            break           #only allow one arg
-
-        of cmdLongOption, cmdShortOption:
-            discard
-
-        of cmdEnd:
-            discard
+var p = initOptParser("-i -o -c=1 -b=8 -r=44100")
 
 var fileSize = uint32(getFileSize(inputFile))
 var data = openRawFile(inputFile)
