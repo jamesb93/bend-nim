@@ -1,6 +1,8 @@
-import os, streams
-
+import os, streams, memfiles
 var fixedSize: uint32 = 36
+
+proc openRawFile(filePath: string): MemMapFileStream =
+    return newMemMapFileStream(filePath, mode=fmRead)
 
 type wavHeader = object
     chunkID: array[4, char]
@@ -36,9 +38,6 @@ proc createHeader(binarySize: uint32): wavHeader =
 
 let inputFile= "/Users/james/dev/scrape/gesture_maker.maxhelp"
 
-proc openRawFile(filePath: string): FileStream =
-    return newFileStream(filePath, mode=fmRead)
-
 var fileSize = uint32(getFileSize(inputFile))
 var data = openRawFile(inputFile)
 
@@ -49,6 +48,5 @@ for name, value in header.fieldPairs:
 
 while not data.atEnd():
     outputStream.write(readUint8(data))
-
 
 outputStream.close()
