@@ -1,4 +1,4 @@
-import memfiles, parseopt
+import memfiles, parseopt, mosh_utils
 
 var inputFile : string
 var argCtr : int
@@ -10,17 +10,11 @@ for kind, key, value in getOpt():
             inputFile = key
             break           #only allow one arg
 
-var fileSize = uint32(getFileSize(inputFile))
-var data = openRawFile(inputFile)
         of cmdLongOption, cmdShortOption:
             discard
 
-var header = createHeader(fileSize)
         of cmdEnd:
             discard
-
-var outputStream : File
-discard outputStream.open("toy_output.wav", fmWrite)
 
 let 
     data = openRawFile(inputFile)

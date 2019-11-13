@@ -32,5 +32,5 @@ proc createHeader*(binarySize: uint32): wavHeader =
     result.subChunk2ID = ['d','a','t','a']
     result.subChunk2Size = binarySize
 
-proc openRawFile*(filePath: string) : MemMapFileStream =
-    return newMemMapFileStream(filePath, fmRead)
+proc openRawFile*(filePath: string) : MemFile =
+    return memfiles.open(filePath, fmRead)
