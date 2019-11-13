@@ -1,5 +1,6 @@
 .DS_Store
 reader
 mosh
+/test
 *.wav
 *.maxhelp
