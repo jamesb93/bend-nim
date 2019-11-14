@@ -1,4 +1,5 @@
 import memfiles
+# http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
 
 var fixedSize: uint32 = 36
 type wavHeader* = object
