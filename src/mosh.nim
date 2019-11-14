@@ -10,6 +10,8 @@ var p = newParser("nimBend"):
     option("-b", "--depth", choices = @["8","16","24","32"], default="8", help="Bit-depth of the output file.")
     option("-c", "--channels", default="1", help="Number of channels in the output file.")
     option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
+    flag("-dc", "--highpass", help="Apply a highpass filter to remove DC from the output.")
+    flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
 
@@ -27,6 +29,9 @@ var bitDepth: uint16 = uint16(parseUInt(opts.depth))
 var numChans: uint16 = uint16(parseUInt(opts.channels))
 var iFile: string = opts.input
 var oFile: string = opts.output
+var dcFilter: bool = opts.highpass
+var verbose: bool = opts.verbose
+
 if not fileExists(iFile):
     echo "The input file does not exist."
     quit()
@@ -49,8 +54,10 @@ let
 var outputFile : File
 discard outputFile.open(oFile, fmWrite)
 
-#-- Apply DC filter on data --#
-dataDC.applyDCFilter(dataMem, dataSize)
+if dcFilter:
+    if verbose: echo "Applying DC Filter"
+    #-- Apply DC filter on data --#
+    dataDC.applyDCFilter(dataMem, dataSize)
 
 #-- Write header --#
 for value in header.fields:
