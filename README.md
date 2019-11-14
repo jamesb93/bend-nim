@@ -17,17 +17,17 @@ I wanted to write a small application that could implement this functionality bu
 
 
 
-[]Francesco Cameli](github.com/vitreo12) is a significant contributor, particularly in optimising the code to be fast (from 100ms to less than 5ms!). I'd like to also thank him for his patience and guidance on all things nim.
+[Francesco Cameli](github.com/vitreo12) is a significant contributor, particularly in optimising the code to be fast (from 100ms to less than 5ms!). I'd like to also thank him for his patience and guidance on all things nim.
 
 
 
 ## Installing
 
-Installation is simple. `git clone` this repo, `cd` to it and compile `mosh.nim` using the nim compiler.
+Installation is simple. `git clone` this repo, `cd` to it and run the following `nimble` command:
 
-We found that the best results for speed and binary size came with aggressive optimisations:
+`nimble installRelease`
 
-`nim c -d:release -d:danger mosh.nim`
+The command will install all nimBend's executables in your predefined `nimble` directory. (Usually, ~/.nimble/bin)
 
 ## Usage
 
