@@ -36,6 +36,9 @@ let
     data = openRawFile(iFile)
     dataMem = data.mem
     dataSize = data.size
+    
+    dataDC = alloc(dataSize) #sizeof(uint8) is 1
+    
     header = createHeader(
         uint32(dataSize),
         sampRate,
@@ -46,6 +49,9 @@ let
 var outputFile : File
 discard outputFile.open(oFile, fmWrite)
 
+#-- Apply DC filter on data --#
+dataDC.applyDCFilter(dataMem, dataSize)
+
 #-- Write header --#
 for value in header.fields:
     when value is array:
@@ -55,5 +61,10 @@ for value in header.fields:
         discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
 
 #-- Write input data --#
-discard outputFile.writeBuffer(dataMem, (dataSize))
+discard outputFile.writeBuffer(dataDC, dataSize)
+
+#Close file
 outputFile.close()
+
+#Free data
+dataDC.dealloc
