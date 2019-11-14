@@ -23,11 +23,11 @@ I wanted to write a small application that could implement this functionality bu
 
 ## Installing
 
-Installation is simple. `git clone` this repo, `cd` to it and compile `mosh.nim` using the nim compiler.
+Installation is simple. `git clone` this repo, `cd` to it and run the following `nimble` command:
 
-We found that the best results for speed and binary size came with aggressive optimisations:
+`nimble installRelease`
 
-`nim c -d:release -d:danger mosh.nim`
+The command will install all nimBend's executables in your predefined `nimble` directory. (Usually, ~/.nimble/bin)
 
 ## Usage
 
