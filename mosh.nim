@@ -1,29 +1,32 @@
-import memfiles, parseopt, mosh_utils, os, system
+import memfiles, mosh_utils, os, system, strutils, argparse
+
 #-- CLI Args --#
 when declared(commandLineParams):
     var cliArgs = commandLineParams()
 
-if len(cliArgs) < 2:
-    echo "You need to provide an input and output file!"
+# Parse Arguments
+var p = newParser("nimBend"):
+    help("nimBend can turn any input file into audio files in the wav format.")
+    option("-b", "--depth", choices = @["8","16","24","32"], default="8", help="Bit-depth of the output file.")
+    option("-c", "--channels", default="1", help="Number of channels in the output file.")
+    option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
+    arg("input")
+    arg("output")
+
+var opts = p.parse(cliArgs)
+# Check to make sure user has passed input/output files
+if opts.input == "":
+    echo "You need to provide an input file."
+    quit()
+if opts.output == "":
+    echo "You need to provide an output file."
     quit()
 
-# Parse Arguments
-var args : seq[string]
-var parser = initOptParser(cliArgs)
-while true:
-    parser.next()
-    case parser.kind
-    of cmdEnd: break
-    of cmdShortOption, cmdLongOption:
-      if parser.val == "":
-        echo "Option: ", parser.key
-      else:
-        echo "Option and value: ", parser.key, ", ", parser.val
-    of cmdArgument:
-      args.add(parser.key)
-
-var iFile: string = args[0]
-var oFile: string = args[1]
+var sampRate: uint32 = uint32(parseUInt(opts.rate))
+var bitDepth: uint16 = uint16(parseUInt(opts.depth))
+var numChans: uint16 = uint16(parseUInt(opts.channels))
+var iFile: string = opts.input
+var oFile: string = opts.output
 if not fileExists(iFile):
     echo "The input file does not exist."
     quit()
@@ -35,9 +38,9 @@ let
     dataSize = data.size
     header = createHeader(
         uint32(dataSize),
-        44100,
-        8,
-        1
+        sampRate,
+        bitDepth,
+        numChans
         )
 
 var outputFile : File
@@ -52,6 +55,5 @@ for value in header.fields:
         discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
 
 #-- Write input data --#
-discard outputFile.writeBuffer(dataMem, (sizeof(uint8) * dataSize))
-
+discard outputFile.writeBuffer(dataMem, (dataSize))
 outputFile.close()
