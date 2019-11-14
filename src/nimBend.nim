@@ -1,4 +1,4 @@
-import memfiles, mosh_utils, os, system, strutils, argparse
+import memfiles, nimBend_utils, os, system, strutils, argparse
 
 #-- CLI Args --#
 when declared(commandLineParams):
