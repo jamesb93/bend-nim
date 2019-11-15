@@ -3,6 +3,9 @@ import memfiles, mosh_utils, os, system, strutils, argparse
 #-- CLI Args --#
 when declared(commandLineParams):
     var cliArgs = commandLineParams()
+    if len(cliArgs) < 2:
+        echo "Please provide a minimum of two parameters."
+        quit()
 
 # Parse Arguments
 var p = newParser("mosh"):
@@ -57,7 +60,7 @@ discard outputFile.open(oFile, fmWrite)
 if dcFilter:
     if verbose: echo "Applying DC Filter"
     #-- Apply DC filter on data --#
-    dataDC.applyDCFilter(dataMem, dataSize)
+    dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
     
 
 #-- Write header --#
