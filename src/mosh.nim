@@ -61,11 +61,12 @@ for value in header.fields:
     else:
         discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
 
-#-- Write input data --#
+#-- Write DC filtered data --#
 discard outputFile.writeBuffer(dataDC, dataSize)
+#discard outputFile.writeBuffer(dataMem, dataSize)
 
 #Close file
 outputFile.close()
 
-#Free data
+#Free data used for DC filter
 dataDC.dealloc

@@ -53,6 +53,7 @@ type
         bit2 : uint8
         bit3 : uint8
 
+#https://stackoverflow.com/questions/7416699/how-to-define-24bit-data-type-in-c
 proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
     #Store as little endian (the way WAV wants it)
     obj.bit3 = uint8(val shr 16 and 0xff)
@@ -84,21 +85,22 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
 
     let filterFB : float = 0.98
 
+    #Should be this applied on x (input), or y (output)?
+    let scaleAmplitude : float = 0.4
+
     case bitDepth:
         of 8:
             var dataArr   = cast[ptr UncheckedArray[uint8]](data)
             var dataDCArr = cast[ptr UncheckedArray[uint8]](dataDC)
 
             for index in 0..size:
-                #let x : float = (float(dataArr[index]) - halfHifghestUInt8) / halfHifghestUInt8   #-1 to 1
                 let x : float = float(dataArr[index]) # - halfHighestUInt8
                 let y : float = x - xPrev + (filterFB * yPrev)
                 xPrev = x
                 yPrev = y
 
                 #Scale output result.. these should in theory be scaled to min/max of uint8 range
-                #let finalOut : float = (y * 0.5 * halfHifghestUInt8) + halfHifghestUInt8
-                let finalOut : float = (y * 0.5) # + halfHighestUInt8
+                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt8
                 
                 #Re-write the results over to the dataDC array
                 dataDCArr[index] = uint8(finalOut)
@@ -107,7 +109,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
             var dataArr   = cast[ptr UncheckedArray[uint16]](data)
             var dataDCArr = cast[ptr UncheckedArray[uint16]](dataDC)
 
-            #account for bigger memory to read
+            #account for bigger chunks of memory to read
             let scaledSize = int(size / 2)
 
             for index in 0..scaledSize:
@@ -117,7 +119,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 yPrev = y
 
                 #Scale output result.. these should in theory be scaled to min/max of uint16 range
-                let finalOut : float = (y * 0.5) # + halfHighestUInt16
+                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt16
                 
                 #Re-write the results over to the dataDC array
                 dataDCArr[index] = uint16(finalOut)
@@ -126,7 +128,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
             var dataArr   = cast[ptr UncheckedArray[uint24_obj]](data)
             var dataDCArr = cast[ptr UncheckedArray[uint24_obj]](dataDC)
 
-            #account for bigger memory to read
+            #account for bigger chunks of memory to read
             let scaledSize = int(size / 3)
 
             for index in 0..scaledSize:
@@ -138,7 +140,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 yPrev = y
 
                 #Scale output result.. these should in theory be scaled to min/max of uint24 range
-                let finalOut : float = (y * 0.5) # + halfHighestUInt24
+                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt24
 
                 var finalOut24bit : uint24_obj
                 finalOut24bit.assignUInt24(uint32(finalOut))
@@ -150,7 +152,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
             var dataArr   = cast[ptr UncheckedArray[uint32]](data)
             var dataDCArr = cast[ptr UncheckedArray[uint32]](dataDC)
             
-            #account for bigger memory to read
+            #account for bigger chunks of memory to read
             let scaledSize = int(size / 4)
 
             for index in 0..scaledSize:
@@ -160,7 +162,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 yPrev = y
 
                 #Scale output result.. these should in theory be scaled to min/max of uint32 range
-                let finalOut : float = (y * 0.5) # + halfHighestUInt32
+                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt32
                 
                 #Re-write the results over to the dataDC array
                 dataDCArr[index] = uint32(finalOut)
