@@ -58,6 +58,7 @@ if dcFilter:
     if verbose: echo "Applying DC Filter"
     #-- Apply DC filter on data --#
     dataDC.applyDCFilter(dataMem, dataSize)
+    
 
 #-- Write header --#
 for value in header.fields:
@@ -67,8 +68,11 @@ for value in header.fields:
     else:
         discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
 
-#-- Write input data --#
-discard outputFile.writeBuffer(dataDC, dataSize)
+if dcFilter:
+    #-- Write input data --#
+    discard outputFile.writeBuffer(dataDC, dataSize)
+if not dcFilter:
+    discard outputFile.writeBuffer(dataMem, dataSize)
 
 #Close file
 outputFile.close()
