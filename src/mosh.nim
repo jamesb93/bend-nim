@@ -1,4 +1,5 @@
-import memfiles, mosh_utils, os, system, strutils, argparse
+import memfiles, os, system, strutils, argparse
+import moshutils, moshwav
 
 #-- CLI Args --#
 when declared(commandLineParams):
@@ -35,7 +36,7 @@ var oFile: string = opts.output
 var dcFilter: bool = opts.highpass
 var verbose: bool = opts.verbose
 
-if not fileExists(iFile):
+if not existsFile(iFile):
     echo "The input file does not exist."
     quit()
 
