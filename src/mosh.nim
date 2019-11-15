@@ -5,8 +5,8 @@ when declared(commandLineParams):
     var cliArgs = commandLineParams()
 
 # Parse Arguments
-var p = newParser("nimBend"):
-    help("nimBend can turn any input file into audio files in the wav format.")
+var p = newParser("mosh"):
+    help("mosh can turn any input file into audio files in the wav format.")
     option("-b", "--depth", choices = @["8","16","24","32"], default="8", help="Bit-depth of the output file.")
     option("-c", "--channels", default="1", help="Number of channels in the output file.")
     option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
@@ -42,7 +42,7 @@ let
     dataMem = data.mem
     dataSize = data.size
     
-    dataDC = alloc(dataSize) #sizeof(uint8) is 1
+    dataDC = alloc(dataSize) #raw bytes
     
     header = createHeader(
         uint32(dataSize),
@@ -77,5 +77,5 @@ if not dcFilter:
 #Close file
 outputFile.close()
 
-#Free data
+#Free data used for DC filter
 dataDC.dealloc
