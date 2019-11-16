@@ -1,5 +1,5 @@
-import memfiles, os, system, strutils, argparse
-import moshutils, moshwav
+import os, system, strutils, argparse, threadpool
+import moshutils
 
 #-- CLI Args --#
 when declared(commandLineParams):
@@ -18,8 +18,8 @@ var p = newParser("mosh"):
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
-
 var opts = p.parse(cliArgs)
+
 # Check to make sure user has passed input/output files
 if opts.input == "":
     echo "You need to provide an input file."
@@ -28,58 +28,54 @@ if opts.output == "":
     echo "You need to provide an output file."
     quit()
 
+# Now assign the CLI args
 var sampRate: uint32 = uint32(parseUInt(opts.rate))
 var bitDepth: uint16 = uint16(parseUInt(opts.depth))
 var numChans: uint16 = uint16(parseUInt(opts.channels))
-var iFile: string = opts.input
-var oFile: string = opts.output
+var iPath: string = opts.input
+var oPath: string = opts.output
+var iType: FileType = iPath.discernFile()
+var oType: FileType = oPath.discernFile()
 var dcFilter: bool = opts.highpass
 var verbose: bool = opts.verbose
 
-if not existsFile(iFile):
-    echo "The input file does not exist."
-    quit()
+#-- Check for parity between the input and output types --#
 
-#-- Process input file > output file --#
-let 
-    data = openRawFile(iFile)
-    dataMem = data.mem
-    dataSize = data.size
-    
-    dataDC = alloc(dataSize) #raw bytes
-    
-    header = createHeader(
-        uint32(dataSize),
+#-- If the output dir doesnt exist make it! --#
+echo iType
+if iType == file:
+    # var outputFilePath: string = joinPath(
+    #     absolutePath(outputFilePath), 
+    #     inputFilePath.extractFilename().changeFileExt(".wav")
+    # )
+    createOutputFile(
+        iPath, 
+        oPath, 
+        dcFilter, 
+        verbose,
         sampRate,
         bitDepth,
         numChans
-        )
+    )
 
-var outputFile : File
-discard outputFile.open(oFile, fmWrite)
+#TODO block user from setting input and output to the same folder/file
+if iType == dir:
+    echo "Running in directory mode"
+    for kind, inputFilePath in walkDir(iPath):
+        if kind == pcFile:
+            var outputFilePath: string = joinPath(
+                absolutePath(oPath), 
+                inputFilePath.extractFilename().changeFileExt(".wav")
+            )
+            spawn createOutputFile(
+                    inputFilePath,
+                    outputFilePath, 
+                    dcFilter, 
+                    verbose,
+                    sampRate,
+                    bitDepth,
+                    numChans
+                )
 
-if dcFilter:
-    if verbose: echo "Applying DC Filter"
-    #-- Apply DC filter on data --#
-    dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
-    
-
-#-- Write header --#
-for value in header.fields:
-    when value is array:
-        for arrayVal in value:
-            discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
-    else:
-        discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
-
-if dcFilter:
-    #-- Write input data --#
-    discard outputFile.writeBuffer(dataDC, dataSize)
-if not dcFilter:
-    discard outputFile.writeBuffer(dataMem, dataSize)
-
-#Close file
-outputFile.close()
-
-#Free data used for DC filter
-dataDC.dealloc
+if iType == none:
+    quit()

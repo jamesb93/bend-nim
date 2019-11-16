@@ -11,8 +11,8 @@ requires "argparse >= 0.9.0"
 
 #Manual buildRelease
 task buildRelease, "Builds nimBend with -d:release and -d:danger":
-    exec "nim c -d:release -d:danger --opt:speed --outdir:./ ./src/mosh.nim"
+    exec "nim c -d:release -d:danger --opt:speed --threads:on --outdir:./ ./src/mosh.nim"
 
 #Manual installRelease
 task installRelease, "Builds nimBend with -d:release and -d:danger and installs it in ~/.nimble/bin":
-    exec "nimble install --passNim:-d:release --passNim:-d:danger --passNim:--opt:speed"
+    exec "nimble install --passNim:-d:release --threads:on --passNim:-d:danger --passNim:--opt:speed"

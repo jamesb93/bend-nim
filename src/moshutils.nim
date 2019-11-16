@@ -1,10 +1,38 @@
-import memfiles
+import memfiles, os
+import moshwav
+
+type FileType* = enum
+    file,
+    dir,
+    none
+
+# proc checkMake*(filePath: string) : bool =
+
+
+proc discernFile*(filePath: string) : FileType = 
+    if filePath.existsFile():
+        return file
+    elif filePath.existsDir():
+        return dir
+    else:
+        return none
+
+proc ensureParity*(iType: FileType, oType: FileType) : bool =
+    if iType == dir and oType == dir:
+        return true
+    elif iType == file and oType == file:
+        return true
+    else:
+        echo "There was a mismatch in the input and output arguments"
+        echo "They should both be either a file or folder."
+        return false
 
 proc openRawFile*(filePath: string) : MemFile =
     return memfiles.open(filePath, fmRead)
 
-#a uint24 type
+#-- 24 bit unsigned int --#
 type 
+    ## This type represents an unsigned 24 bit integer
     uint24_range = range[0'u32 .. 0xFFFFFF'u32]
     uint24_obj {.packed.} = object
         bit1 : uint8
@@ -33,6 +61,7 @@ const
     halfHighestUInt32 : float = highestUInt32 * 0.5
 ]#
 
+#-- DC Filter --#
 proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth : uint16) : void =
 
     #Use floating point operations for precision (and ease of calcs)
@@ -126,3 +155,58 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 dataDCArr[index] = uint32(finalOut)
         else:
             discard
+
+proc createOutputFile*(
+    inputFilePath: string,
+    outputFilePath: string, 
+    dcFilter: bool,
+    verbose: bool,
+    sampRate: uint32,
+    bitDepth: uint16,
+    numChans: uint16) {.thread.} =
+    
+    #-- Process input file > output file --#
+    var
+        data = openRawFile(
+            absolutePath(inputFilePath)
+            )
+        dataMem = data.mem
+        dataSize = data.size
+        
+        dataDC = alloc(dataSize) #raw bytes
+
+        header: wavHeader = createHeader(
+            uint32(dataSize),
+            sampRate,
+            bitDepth,
+            numChans
+        )
+
+    var outputFile : File
+    discard outputFile.open(outputFilePath, fmWrite)
+
+    if dcFilter:
+        if verbose: echo "Applying DC Filter"
+        #-- Apply DC filter on data --#
+        dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
+        
+
+    #-- Write header --#
+    for value in header.fields:
+        when value is array:
+            for arrayVal in value:
+                discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
+        else:
+            discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
+
+    if dcFilter:
+        #-- Write input data --#
+        discard outputFile.writeBuffer(dataDC, dataSize)
+    if not dcFilter:
+        discard outputFile.writeBuffer(dataMem, dataSize)
+
+    #Close file
+    outputFile.close()
+
+    #Free data used for DC filter
+    dataDC.dealloc
