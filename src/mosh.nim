@@ -1,6 +1,8 @@
 import os, system, strutils, argparse, threadpool
 import moshutils
 
+{. experimental: "parallel" .}
+
 #-- CLI Args --#
 when declared(commandLineParams):
     var cliArgs = commandLineParams()
@@ -44,10 +46,6 @@ var verbose: bool = opts.verbose
 #-- If the output dir doesnt exist make it! --#
 echo iType
 if iType == file:
-    # var outputFilePath: string = joinPath(
-    #     absolutePath(outputFilePath), 
-    #     inputFilePath.extractFilename().changeFileExt(".wav")
-    # )
     createOutputFile(
         iPath, 
         oPath, 
@@ -67,7 +65,7 @@ if iType == dir:
                 absolutePath(oPath), 
                 inputFilePath.extractFilename().changeFileExt(".wav")
             )
-            spawn createOutputFile(
+            parallel: spawn createOutputFile(
                     inputFilePath,
                     outputFilePath, 
                     dcFilter, 
