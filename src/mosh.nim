@@ -1,7 +1,6 @@
 import os, system, strutils, argparse, threadpool
 import moshutils
-
-{. experimental: "parallel" .}
+{. experimental: "parallel" .} # Enable parallel processing
 
 #-- CLI Args --#
 when declared(commandLineParams):
@@ -65,6 +64,10 @@ if iType == dir:
                 absolutePath(oPath), 
                 inputFilePath.extractFilename().changeFileExt(".wav")
             )
+            echo "*****"
+            echo inputFilePath
+            echo outputFilePath
+
             parallel: spawn createOutputFile(
                     inputFilePath,
                     outputFilePath, 
@@ -76,4 +79,5 @@ if iType == dir:
                 )
 
 if iType == none:
+    echo "There was an error with your input or output arguments."
     quit()
