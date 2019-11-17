@@ -1,5 +1,6 @@
 import os, system, strutils, argparse, threadpool
 import moshutils
+import progress
 {. experimental: "parallel" .} # Enable parallel processing
 
 #-- CLI Args --#
@@ -66,6 +67,7 @@ if iType == file:
 #-- Operate on folders --#
 if iType == dir:
     echo "Running in directory mode"
+    var bar = newProgressBar()
     checkMake(oPath)
     for kind, inputFilePath in walkDir(iPath):
         if kind == pcFile and getFileSize(inputFilePath) != 0:

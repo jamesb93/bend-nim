@@ -8,6 +8,7 @@ bin    = @["mosh"]
 
 requires "nim >= 1.0.0"
 requires "argparse >= 0.9.0"
+requires "progress >= 1.1.1"
 
 #Manual buildRelease
 task buildRelease, "Builds nimBend with -d:release and -d:danger":
