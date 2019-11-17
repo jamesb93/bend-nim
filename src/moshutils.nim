@@ -1,52 +1,52 @@
-import memfiles
-# http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+import memfiles, os, strutils
+import moshwav
 
-const fixedSize : uint32 = 36
+type FileType* = enum
+    file,
+    dir,
+    none
 
-type wavHeader* = object
-    chunkID*: array[4, char]
-    chunkSize*: uint32
-    format*: array[4, char]
-    subChunk1ID*: array[4, char]
-    subChunk1Size*: uint32
-    audioFormat*: uint16
-    numChannels*: uint16
-    sampleRate*: uint32
-    byteRate*: uint32
-    blockAlign*: uint16
-    bitDepth*: uint16
-    subChunk2ID*: array[4, char]
-    subChunk2Size*: uint32
+proc formatDotFile*(input: string): string =
+    if input[0] == '.': 
+        return input[1..^1] 
+    else: 
+        return input
 
-proc createHeader*(
-    binarySize: uint32,
-    kSampleRate: uint32,
-    kBitDepth: uint16,
-    kNumChannels: uint16
-): wavHeader =
-    # Wav header structure
-    result.chunkID = ['R','I','F','F']
-    result.chunkSize = binarySize + fixedSize
-    result.format = ['W','A','V','E']
-    result.subChunk1ID = ['f','m','t',' ']
-    result.subChunk1Size = 16
-    if kBitDepth == 32:
-        result.audioFormat = 3
+#-- Deal with bad folder inputs --#
+proc exists(p: string): bool =
+    try:
+        discard getFileInfo(p)
+        result = true
+    except OSError:
+        result = false
+    
+proc checkMake*(filePath: string) : void =
+    if not exists(filePath):
+        createDir(filePath)
+        echo filePath, " did not exist and was created for you."
+        
+proc discernFile*(filePath: string) : FileType = 
+    if filePath.existsFile():
+        return file
+    elif filePath.existsDir():
+        return dir
     else:
-        result.audioFormat = 1
-    result.numChannels = kNumChannels
-    result.sampleRate = kSampleRate
-    result.byteRate = kSampleRate * kNumChannels * kBitDepth div 8
-    result.blockAlign = kNumChannels * kBitDepth div 8
-    result.bitDepth = kBitDepth
-    result.subChunk2ID = ['d','a','t','a']
-    result.subChunk2Size = binarySize
+        return none
+
+proc ensureParity*(input: FileType, output: FileType) : bool =
+    if input == output:
+        return true
+    else:
+        echo "There was a mismatch between the type of input and output arguments"
+        echo "They should both be either a file or folder."
+        return false
 
 proc openRawFile*(filePath: string) : MemFile =
     return memfiles.open(filePath, fmRead)
 
-#a uint24 type
+#-- 24 bit unsigned int --#
 type 
+    ## This type represents an unsigned 24 bit integer
     uint24_range = range[0'u32 .. 0xFFFFFF'u32]
     uint24_obj {.packed.} = object
         bit1 : uint8
@@ -75,6 +75,7 @@ const
     halfHighestUInt32 : float = highestUInt32 * 0.5
 ]#
 
+#-- DC Filter --#
 proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth : uint16) : void =
 
     #Use floating point operations for precision (and ease of calcs)
@@ -168,3 +169,58 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 dataDCArr[index] = uint32(finalOut)
         else:
             discard
+
+proc createOutputFile*(
+    inputFilePath: string,
+    outputFilePath: string, 
+    dcFilter: bool,
+    verbose: bool,
+    sampRate: uint32,
+    bitDepth: uint16,
+    numChans: uint16) {.thread.} =
+    
+    #-- Process input file > output file --#
+    var
+        data = openRawFile(
+            absolutePath(inputFilePath)
+            )
+        dataMem = data.mem
+        dataSize = data.size
+        
+        dataDC = alloc(dataSize) #raw bytes
+
+        header: wavHeader = createHeader(
+            uint32(dataSize),
+            sampRate,
+            bitDepth,
+            numChans
+        )
+
+    var outputFile : File
+    discard outputFile.open(outputFilePath, fmWrite)
+
+    if dcFilter:
+        if verbose: echo "Applying DC Filter"
+        #-- Apply DC filter on data --#
+        dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
+        
+
+    #-- Write header --#
+    for value in header.fields:
+        when value is array:
+            for arrayVal in value:
+                discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
+        else:
+            discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
+
+    if dcFilter:
+        #-- Write input data --#
+        discard outputFile.writeBuffer(dataDC, dataSize)
+    if not dcFilter:
+        discard outputFile.writeBuffer(dataMem, dataSize)
+
+    #Close file
+    outputFile.close()
+
+    #Free data used for DC filter
+    dataDC.dealloc

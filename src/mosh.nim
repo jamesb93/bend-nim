@@ -1,4 +1,6 @@
-import memfiles, mosh_utils, os, system, strutils, argparse
+import os, system, strutils, argparse, threadpool
+import moshutils
+{. experimental: "parallel" .} # Enable parallel processing
 
 #-- CLI Args --#
 when declared(commandLineParams):
@@ -17,8 +19,8 @@ var p = newParser("mosh"):
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
-
 var opts = p.parse(cliArgs)
+
 # Check to make sure user has passed input/output files
 if opts.input == "":
     echo "You need to provide an input file."
@@ -27,58 +29,62 @@ if opts.output == "":
     echo "You need to provide an output file."
     quit()
 
-var sampRate: uint32 = uint32(parseUInt(opts.rate))
-var bitDepth: uint16 = uint16(parseUInt(opts.depth))
-var numChans: uint16 = uint16(parseUInt(opts.channels))
-var iFile: string = opts.input
-var oFile: string = opts.output
-var dcFilter: bool = opts.highpass
-var verbose: bool = opts.verbose
+# Now assign the CLI args
+let sampRate: uint32 = uint32(parseUInt(opts.rate))
+let bitDepth: uint16 = uint16(parseUInt(opts.depth))
+let numChans: uint16 = uint16(parseUInt(opts.channels))
+let iPath: string = opts.input
+let oPath: string = opts.output
+let iType: FileType = iPath.discernFile()
+let oType: FileType = oPath.discernFile()
+let dcFilter: bool = opts.highpass
+let verbose: bool = opts.verbose
 
-if not fileExists(iFile):
-    echo "The input file does not exist."
+#-- Check for parity between the input and output types --#
+if not ensureParity(iType, oType):
     quit()
 
-#-- Process input file > output file --#
-let 
-    data = openRawFile(iFile)
-    dataMem = data.mem
-    dataSize = data.size
+if iPath == oPath:
+    echo "You cannot set the same input and output file for safety reasons"
+    quit()
     
-    dataDC = alloc(dataSize) #raw bytes
-    
-    header = createHeader(
-        uint32(dataSize),
+#-- Operate on single files --#
+if iType == file:
+    if getFileSize(iPath) != 0:
+        createOutputFile(
+        iPath, 
+        oPath, 
+        dcFilter, 
+        verbose,
         sampRate,
         bitDepth,
         numChans
         )
-
-var outputFile : File
-discard outputFile.open(oFile, fmWrite)
-
-if dcFilter:
-    if verbose: echo "Applying DC Filter"
-    #-- Apply DC filter on data --#
-    dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
-    
-
-#-- Write header --#
-for value in header.fields:
-    when value is array:
-        for arrayVal in value:
-            discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
     else:
-        discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
+        echo "Input file is 0 bytes!"
 
-if dcFilter:
-    #-- Write input data --#
-    discard outputFile.writeBuffer(dataDC, dataSize)
-if not dcFilter:
-    discard outputFile.writeBuffer(dataMem, dataSize)
+#-- Operate on folders --#
+if iType == dir:
+    echo "Running in directory mode"
+    checkMake(oPath)
+    for kind, inputFilePath in walkDir(iPath):
+        if kind == pcFile and getFileSize(inputFilePath) != 0:
+            
+            var outputFilePath: string = joinPath(
+                oPath.absolutePath(), 
+                inputFilePath.extractFilename().formatDotFile().changeFileExt(".wav")
+            )
 
-#Close file
-outputFile.close()
+            parallel: spawn createOutputFile(
+                inputFilePath,
+                outputFilePath, 
+                dcFilter, 
+                verbose,
+                sampRate,
+                bitDepth,
+                numChans
+                )
 
-#Free data used for DC filter
-dataDC.dealloc
+if iType == none:
+    echo "There was an error with your input or output arguments."
+    quit()
