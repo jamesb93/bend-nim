@@ -1,4 +1,4 @@
-import memfiles, os
+import memfiles, os, strutils
 import moshwav
 
 type FileType* = enum
@@ -6,9 +6,25 @@ type FileType* = enum
     dir,
     none
 
-# proc checkMake*(filePath: string) : bool =
+proc formatDotFile*(input: string): string =
+    if input[0] == '.': 
+        return input[1..^1] 
+    else: 
+        return input
 
-
+#-- Deal with bad folder inputs --#
+proc exists(p: string): bool =
+    try:
+        discard getFileInfo(p)
+        result = true
+    except OSError:
+        result = false
+    
+proc checkMake*(filePath: string) : void =
+    if not exists(filePath):
+        createDir(filePath)
+        echo filePath, " did not exist and was created for you."
+        
 proc discernFile*(filePath: string) : FileType = 
     if filePath.existsFile():
         return file
@@ -17,13 +33,11 @@ proc discernFile*(filePath: string) : FileType =
     else:
         return none
 
-proc ensureParity*(iType: FileType, oType: FileType) : bool =
-    if iType == dir and oType == dir:
-        return true
-    elif iType == file and oType == file:
+proc ensureParity*(input: FileType, output: FileType) : bool =
+    if input == output:
         return true
     else:
-        echo "There was a mismatch in the input and output arguments"
+        echo "There was a mismatch between the type of input and output arguments"
         echo "They should both be either a file or folder."
         return false
 

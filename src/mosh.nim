@@ -30,22 +30,28 @@ if opts.output == "":
     quit()
 
 # Now assign the CLI args
-var sampRate: uint32 = uint32(parseUInt(opts.rate))
-var bitDepth: uint16 = uint16(parseUInt(opts.depth))
-var numChans: uint16 = uint16(parseUInt(opts.channels))
-var iPath: string = opts.input
-var oPath: string = opts.output
-var iType: FileType = iPath.discernFile()
-var oType: FileType = oPath.discernFile()
-var dcFilter: bool = opts.highpass
-var verbose: bool = opts.verbose
+let sampRate: uint32 = uint32(parseUInt(opts.rate))
+let bitDepth: uint16 = uint16(parseUInt(opts.depth))
+let numChans: uint16 = uint16(parseUInt(opts.channels))
+let iPath: string = opts.input
+let oPath: string = opts.output
+let iType: FileType = iPath.discernFile()
+let oType: FileType = oPath.discernFile()
+let dcFilter: bool = opts.highpass
+let verbose: bool = opts.verbose
 
 #-- Check for parity between the input and output types --#
+if not ensureParity(iType, oType):
+    quit()
 
-#-- If the output dir doesnt exist make it! --#
-echo iType
+if iPath == oPath:
+    echo "You cannot set the same input and output file for safety reasons"
+    quit()
+    
+#-- Operate on single files --#
 if iType == file:
-    createOutputFile(
+    if getFileSize(iPath) != 0:
+        createOutputFile(
         iPath, 
         oPath, 
         dcFilter, 
@@ -53,29 +59,30 @@ if iType == file:
         sampRate,
         bitDepth,
         numChans
-    )
+        )
+    else:
+        echo "Input file is 0 bytes!"
 
-#TODO block user from setting input and output to the same folder/file
+#-- Operate on folders --#
 if iType == dir:
     echo "Running in directory mode"
+    checkMake(oPath)
     for kind, inputFilePath in walkDir(iPath):
-        if kind == pcFile:
+        if kind == pcFile and getFileSize(inputFilePath) != 0:
+            
             var outputFilePath: string = joinPath(
-                absolutePath(oPath), 
-                inputFilePath.extractFilename().changeFileExt(".wav")
+                oPath.absolutePath(), 
+                inputFilePath.extractFilename().formatDotFile().changeFileExt(".wav")
             )
-            echo "*****"
-            echo inputFilePath
-            echo outputFilePath
 
             parallel: spawn createOutputFile(
-                    inputFilePath,
-                    outputFilePath, 
-                    dcFilter, 
-                    verbose,
-                    sampRate,
-                    bitDepth,
-                    numChans
+                inputFilePath,
+                outputFilePath, 
+                dcFilter, 
+                verbose,
+                sampRate,
+                bitDepth,
+                numChans
                 )
 
 if iType == none:
