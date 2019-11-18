@@ -15,7 +15,7 @@ task buildRelease, "Builds nimBend with -d:release and -d:danger":
 
 #Manual installRelease
 task installRelease, "Builds nimBend with -d:release and -d:danger and installs it in ~/.nimble/bin":
-    exec "nimble install --passNim:-d:release --threads:on --passNim:-d:danger --passNim:--opt:speed"
+    exec "nimble install --passNim:-d:release --passNim:--threads:on -d:danger --passNim:--opt:speed"
 
 #Manual buildDebug
 task buildDebug, "Builds nimBend without any optimisations and full stack traces":
