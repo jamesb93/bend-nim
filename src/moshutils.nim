@@ -84,7 +84,7 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
         xPrev : float = 0.0
         yPrev : float = 0.0
 
-    let filterFB : float = 0.98
+    let filterFB : float = 0.995
 
     #Should be this applied on x (input), or y (output)?
     let scaleAmplitude : float = 0.4
