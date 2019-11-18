@@ -5,9 +5,6 @@ import moshutils
 #-- CLI Args --#
 when declared(commandLineParams):
     var cliArgs = commandLineParams()
-    if len(cliArgs) < 2:
-        echo "Please provide a minimum of two parameters."
-        quit()
 
 # Parse Arguments
 var p = newParser("mosh"):
@@ -17,7 +14,8 @@ var p = newParser("mosh"):
     option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
     option("-l", "--limit", default="5000", help="The maximum limit of files to process in directory mode.")
     option("-m", "--maxsize", default="5000", help="The maximum size of an individual file to be processed in directory mode.")
-    flag("-dc", "--highpass", help="Apply a highpass filter to remove DC from the output.")
+    option("-dc", "--dcfilter", default="1", help="Applies a dcfilter to the output. 1 for on (default or 0 for off.")
+    # flag("-dc", "--highpass", help="Apply a highpass filter to remove DC from the output.")
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
@@ -41,7 +39,7 @@ let iPath: string = opts.input
 let oPath: string = opts.output
 let iType: FileType = iPath.discernFile()
 let oType: FileType = oPath.discernFile()
-let dcFilter: bool = opts.highpass
+let dcFilter: bool = parseBool(opts.dcfilter)
 let verbose: bool = opts.verbose
 
 #-- Make sure that the input and output are not the same file --#
@@ -78,24 +76,25 @@ if iType == dir:
     var progressMb: float = 0
     while progressMb < limit:
         for inputFilePath in walkDirRec(iPath):
-            var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
-            if sizeMb < maxSize and sizeMb != 0: # Check for size limitations
-                progressMb += sizeMb
+            if inputFilePath.parentDir() != oPath:
+                var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
+                if sizeMb < maxSize and sizeMb != 0: # Check for size limitations
+                    progressMb += sizeMb
 
-                var outputFilePath: string = joinPath(
-                    oPath.absolutePath(), 
-                    inputFilePath.extractFilename().formatDotFile().changeFileExt(".wav")
-                )
+                    var outputFilePath: string = joinPath(
+                        oPath.absolutePath(), 
+                        inputFilePath.extractFilename().formatDotFile().changeFileExt(".wav")
+                    )
 
-                parallel: spawn createOutputFile(
-                    inputFilePath,
-                    outputFilePath, 
-                    dcFilter, 
-                    verbose,
-                    sampRate,
-                    bitDepth,
-                    numChans
-                )
+                    createOutputFile(
+                        inputFilePath,
+                        outputFilePath, 
+                        dcFilter, 
+                        verbose,
+                        sampRate,
+                        bitDepth,
+                        numChans
+                    )
 
 if iType == none:
     echo "There was an error with your input or output arguments."
