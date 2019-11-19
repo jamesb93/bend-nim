@@ -174,15 +174,18 @@ proc createOutputFile*(
     inputFilePath: string,
     outputFilePath: string, 
     dcFilter: bool,
-    verbose: bool,
     sampRate: uint32,
     bitDepth: uint16,
     numChans: uint16) {.thread.} =
     
     #-- Process input file > output file --#
     var
-        data = openRawFile(
-            absolutePath(inputFilePath)
+        # data = openRawFile(
+        #     absolutePath(inputFilePath)
+        #     )
+        data: MemFile = memfiles.open(
+            absolutePath(inputFilePath), 
+            fmRead
             )
         dataMem = data.mem
         dataSize = data.size
@@ -196,31 +199,43 @@ proc createOutputFile*(
             numChans
         )
 
+    # echo "pre-open"
     var outputFile : File
     discard outputFile.open(outputFilePath, fmWrite)
+    # echo "post-open"
 
+    # echo "pre-filter"
     if dcFilter:
-        if verbose: echo "Applying DC Filter"
-        #-- Apply DC filter on data --#
         dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
+    # echo "post-filter"
         
-
+    # echo "pre-header"
     #-- Write header --#
     for value in header.fields:
         when value is array:
             for arrayVal in value:
+                # echo "working on array"
                 discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
+                # echo "worked on array"
         else:
+            # echo "working on single byte"
             discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
+            # echo "worked on single byte"
+    # echo "post-header"
 
+    # echo "pre-write"
     if dcFilter:
         #-- Write input data --#
         discard outputFile.writeBuffer(dataDC, dataSize)
     if not dcFilter:
         discard outputFile.writeBuffer(dataMem, dataSize)
+    # echo "post-write"
 
     #Close file
+    # echo "pre-close"
     outputFile.close()
-
+    # echo "post-close"
     #Free data used for DC filter
+    # echo "Pre-alloc"
     dataDC.dealloc
+    # echo "post-alloc"

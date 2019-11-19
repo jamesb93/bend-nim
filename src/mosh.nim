@@ -15,7 +15,6 @@ var p = newParser("mosh"):
     option("-l", "--limit", default="5000", help="The maximum limit of files to process in directory mode.")
     option("-m", "--maxsize", default="5000", help="The maximum size of an individual file to be processed in directory mode.")
     option("-dc", "--dcfilter", default="1", help="Applies a dcfilter to the output. 1 for on (default or 0 for off.")
-    # flag("-dc", "--highpass", help="Apply a highpass filter to remove DC from the output.")
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
@@ -48,23 +47,24 @@ if iPath == oPath:
     quit()
 
 #-- Make the output directory if it does not exist --#
-if oType == dir or oType == none: checkMake(oPath)
+# if oType == dir or oType == none: checkMake(oPath)
 
-#-- Check for parity between the input and output types --#
-if not ensureParity(iType, oPath.discernFile()):
-    quit()
+# #-- Check for parity between the input and output types --#
+# if not ensureParity(iType, oPath.discernFile()):
+#     quit()
     
 #-- Operate on single files --#
 if iType == file:
+    if verbose: echo "Running single file mode"
+    if verbose: echo "Applying DC to output"
     if getFileSize(iPath) != 0:
         createOutputFile(
-        iPath, 
-        oPath, 
-        dcFilter, 
-        verbose,
-        sampRate,
-        bitDepth,
-        numChans
+            iPath, 
+            oPath, 
+            dcFilter, 
+            sampRate,
+            bitDepth,
+            numChans
         )
     else:
         echo "Input file is 0 bytes!"
@@ -72,29 +72,33 @@ if iType == file:
 
 #-- Operate on folders --#
 if iType == dir:
-    echo "Running in directory mode"
+    var outputDir: string = oPath.absolutePath()
+    if verbose: echo "Running in directory mode"
+    if verbose: echo "Applying DC to output"
     var progressMb: float = 0
+
     while progressMb < limit:
         for inputFilePath in walkDirRec(iPath):
+            echo inputFilePath
+            if verbose: echo inputFilePath
             if inputFilePath.parentDir() != oPath:
                 var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
-                if sizeMb < maxSize and sizeMb != 0: # Check for size limitations
-                    progressMb += sizeMb
+                if sizeMb < maxSize and sizeMb != 0: # Check for size boundaries
 
                     var outputFilePath: string = joinPath(
-                        oPath.absolutePath(), 
-                        inputFilePath.extractFilename().formatDotFile().changeFileExt(".wav")
+                        outputDir,
+                        inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
                     )
-
+                    echo "op: ", outputFilePath
                     createOutputFile(
                         inputFilePath,
                         outputFilePath, 
                         dcFilter, 
-                        verbose,
                         sampRate,
                         bitDepth,
                         numChans
                     )
+                    progressMb += sizeMb
 
 if iType == none:
     echo "There was an error with your input or output arguments."
