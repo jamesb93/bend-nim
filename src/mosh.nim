@@ -84,11 +84,7 @@ if iType == dir:
             if inputFilePath.parentDir() != oPath:
                 var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
                 if sizeMb < maxSize and sizeMb != 0: # Check for size boundaries
-
-                    var outputFilePath: string = joinPath(
-                        outputDir,
-                        inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
-                    )
+                    var outputFilePath = outputDir / inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
                     echo "op: ", outputFilePath
                     createOutputFile(
                         inputFilePath,
