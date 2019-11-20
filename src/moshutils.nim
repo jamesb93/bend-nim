@@ -47,11 +47,12 @@ proc openRawFile*(filePath: string) : MemFile =
 #-- 24 bit unsigned int --#
 type 
     ## This type represents an unsigned 24 bit integer
-    uint24_range = range[0'u32 .. 0xFFFFFF'u32]
     uint24_obj {.packed.} = object
         bit1 : uint8
         bit2 : uint8
         bit3 : uint8
+    
+    #uint24_range = range[0'u32 .. 0xFFFFFF'u32]
 
 #https://stackoverflow.com/questions/7416699/how-to-define-24bit-data-type-in-c
 proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
@@ -76,11 +77,10 @@ const
 ]#
 
 #-- DC Filter --#
-proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth : uint16) : void =
+proc applyDCFilter*(dataDC : pointer, dataMem : pointer, dataSize : Natural, bitDepth : uint16) : void =
 
     #Use floating point operations for precision (and ease of calcs)
     var 
-        y : float     = 0.0
         xPrev : float = 0.0
         yPrev : float = 0.0
 
@@ -91,10 +91,12 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
 
     case bitDepth:
         of 8:
-            var dataArr   = cast[ptr UncheckedArray[uint8]](data)
+            var dataArr   = cast[ptr UncheckedArray[uint8]](dataMem)
             var dataDCArr = cast[ptr UncheckedArray[uint8]](dataDC)
 
-            for index in 0..size:
+            let scaledSize = dataSize - 1
+
+            for index in 0..scaledSize:
                 let x : float = float(dataArr[index]) # - halfHighestUInt8
                 let y : float = x - xPrev + (filterFB * yPrev)
                 xPrev = x
@@ -107,11 +109,11 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 dataDCArr[index] = uint8(finalOut)
 
         of 16:
-            var dataArr   = cast[ptr UncheckedArray[uint16]](data)
+            var dataArr   = cast[ptr UncheckedArray[uint16]](dataMem)
             var dataDCArr = cast[ptr UncheckedArray[uint16]](dataDC)
 
             #account for bigger chunks of memory to read
-            let scaledSize = int(size / 2)
+            let scaledSize = int(dataSize / 2) - 1
 
             for index in 0..scaledSize:
                 let x : float = float(dataArr[index]) #- halfHighestUInt16
@@ -126,11 +128,11 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 dataDCArr[index] = uint16(finalOut)
         
         of 24:
-            var dataArr   = cast[ptr UncheckedArray[uint24_obj]](data)
+            var dataArr   = cast[ptr UncheckedArray[uint24_obj]](dataMem)
             var dataDCArr = cast[ptr UncheckedArray[uint24_obj]](dataDC)
 
             #account for bigger chunks of memory to read
-            let scaledSize = int(size / 3)
+            let scaledSize = int(dataSize / 3) - 1
 
             for index in 0..scaledSize:
                 let xUnpacked : float = float(dataArr[index].asUnsigned32Bit)
@@ -150,11 +152,11 @@ proc applyDCFilter*(dataDC : pointer, data : pointer, size : Natural, bitDepth :
                 dataDCArr[index] = finalOut24bit
 
         of 32:
-            var dataArr   = cast[ptr UncheckedArray[uint32]](data)
+            var dataArr   = cast[ptr UncheckedArray[uint32]](dataMem)
             var dataDCArr = cast[ptr UncheckedArray[uint32]](dataDC)
             
             #account for bigger chunks of memory to read
-            let scaledSize = int(size / 4)
+            let scaledSize = int(dataSize / 4) - 1
 
             for index in 0..scaledSize:
                 let x : float = float(dataArr[index]) # - halfHighestUInt32
@@ -180,65 +182,55 @@ proc createOutputFile*(
     
     #-- Process input file > output file --#
     var
-        # data = openRawFile(
-        #     absolutePath(inputFilePath)
-        #     )
-        data: MemFile = memfiles.open(
+        inputData: MemFile = memfiles.open(
             absolutePath(inputFilePath), 
             fmRead
             )
-        dataMem = data.mem
-        dataSize = data.size
+            
+        inputDataMem  = inputData.mem
+        inputDataSize = inputData.size
         
         dataDC : pointer 
 
         header: wavHeader = createHeader(
-            uint32(dataSize),
+            uint32(inputDataSize),
             sampRate,
             bitDepth,
             numChans
         )
 
-    # echo "pre-open"
+    #Create the output file
     var outputFile : File
-    discard outputFile.open(outputFilePath, fmWrite)
-    # echo "post-open"
-
-    # echo "pre-filter"
+    if not outputFile.open(outputFilePath, fmWrite):
+        echo "ERROR: Could not create ", outputFilePath
+        return
+    
+    #Apply DC filter
     if dcFilter:
-        dataDC = alloc(dataSize) #raw bytes
-        dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
-    # echo "post-filter"
-        
-    # echo "pre-header"
+        #raw bytes allocation
+        dataDC = alloc(inputDataSize)
+
+        if dataDC.isNil:
+            echo "ERROR: Could not allocate data for DC filter"
+            return
+
+        dataDC.applyDCFilter(inputDataMem, inputDataSize, bitDepth)
+
     #-- Write header --#
     for value in header.fields:
         when value is array:
             for arrayVal in value:
-                # echo "working on array"
                 discard outputFile.writeBuffer(unsafeAddr(arrayVal), sizeof(arrayVal))
-                # echo "worked on array"
         else:
-            # echo "working on single byte"
             discard outputFile.writeBuffer(unsafeAddr(value), sizeof(value))
-            # echo "worked on single byte"
-    # echo "post-header"
-
-    # echo "pre-write"
+    
+    #-- Write data to output --#
     if dcFilter:
-        #-- Write input data --#
-        discard outputFile.writeBuffer(dataDC, dataSize)
+        discard outputFile.writeBuffer(dataDC, inputDataSize)
         dataDC.dealloc
+    else:
+        discard outputFile.writeBuffer(inputDataMem, inputDataSize)
 
-    if not dcFilter:
-        discard outputFile.writeBuffer(dataMem, dataSize)
-    # echo "post-write"
-
-    #Close file
-    # echo "pre-close"
+    #Close files
     outputFile.close()
-    # echo "post-close"
-    #Free data used for DC filter
-    # echo "Pre-alloc"
-    dataDC.dealloc
-    # echo "post-alloc"
+    inputData.close()
