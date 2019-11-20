@@ -14,7 +14,7 @@ var p = newParser("mosh"):
     option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
     option("-l", "--limit", default="5000", help="The maximum limit of files to process in directory mode.")
     option("-m", "--maxsize", default="5000", help="The maximum size of an individual file to be processed in directory mode.")
-    option("-dc", "--dcfilter", default="1", help="Applies a dcfilter to the output. 1 for on (default or 0 for off.")
+    option("-dc", "--dcfilter", default="0", help="Applies a dcfilter to the output. 1 for on (default or 0 for off.")
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
