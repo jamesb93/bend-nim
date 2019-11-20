@@ -190,7 +190,7 @@ proc createOutputFile*(
         dataMem = data.mem
         dataSize = data.size
         
-        dataDC = alloc(dataSize) #raw bytes
+        dataDC : pointer 
 
         header: wavHeader = createHeader(
             uint32(dataSize),
@@ -206,6 +206,7 @@ proc createOutputFile*(
 
     # echo "pre-filter"
     if dcFilter:
+        dataDC = alloc(dataSize) #raw bytes
         dataDC.applyDCFilter(dataMem, dataSize, bitDepth)
     # echo "post-filter"
         
@@ -227,6 +228,8 @@ proc createOutputFile*(
     if dcFilter:
         #-- Write input data --#
         discard outputFile.writeBuffer(dataDC, dataSize)
+        dataDC.dealloc
+
     if not dcFilter:
         discard outputFile.writeBuffer(dataMem, dataSize)
     # echo "post-write"
