@@ -14,7 +14,7 @@ var p = newParser("mosh"):
     option("-r", "--rate", default="44100", help="The sampleing rate of the output file.")
     option("-l", "--limit", default="5000", help="The maximum limit of files to process in directory mode.")
     option("-m", "--maxsize", default="5000", help="The maximum size of an individual file to be processed in directory mode.")
-    flag("-dc", "--dcfilter", help="Applies a DC filter to the output.)
+    flag("-dc", "--dcfilter", help="Applies a DC filter to the output.")
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
     arg("input")
     arg("output")
@@ -37,7 +37,7 @@ let maxSize: float = parseFloat(opts.maxsize)
 let iPath: string = opts.input
 let oPath: string = opts.output
 let iType: FileType = iPath.discernFile()
-let dcFilter: bool = parseBool(opts.dcfilter)
+let dcFilter: bool = opts.dcfilter
 let verbose: bool = opts.verbose
 
 #-- Make sure that the input and output are not the same file --#
@@ -79,7 +79,7 @@ if iType == dir:
                 var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
                 if sizeMb < maxSize and sizeMb != 0: # Check for size boundaries
                     var outputFilePath = outputDir / inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
-                    createOutputFile(
+                    parallel: spawn createOutputFile(
                         inputFilePath,
                         outputFilePath, 
                         dcFilter, 
