@@ -190,7 +190,7 @@ proc createOutputFile*(
         inputDataMem  = inputData.mem
         inputDataSize = inputData.size
         
-        dataDC : pointer 
+        dataDC: pointer 
 
         header: wavHeader = createHeader(
             uint32(inputDataSize),
