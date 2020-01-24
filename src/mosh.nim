@@ -16,6 +16,7 @@ var p = newParser("mosh"):
     option("-m", "--maxsize", default="5000", help="The maximum size of an individual file to be processed in directory mode.")
     flag("-dc", "--dcfilter", help="Applies a DC filter to the output.")
     flag("-v", "--verbose", help="When enabled, allows for verbose output.")
+    flag("-g", "--generate" help="Generate new data from some data")
     arg("input")
     arg("output")
 var opts = p.parse(cliArgs)
@@ -39,6 +40,7 @@ let oPath: string = opts.output
 let iType: FileType = iPath.discernFile()
 let dcFilter: bool = opts.dcfilter
 let verbose: bool = opts.verbose
+let generate: bool = opts.generate
 
 #-- Make sure that the input and output are not the same file --#
 if iPath == oPath:
@@ -60,7 +62,8 @@ if iType == file:
             dcFilter, 
             sampRate,
             bitDepth,
-            numChans
+            numChans,
+            generate
         )
     else:
         echo "Input file is 0 bytes!"
