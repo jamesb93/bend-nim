@@ -19,27 +19,43 @@ proc buildChain(inputData:seq[int], order:int): Table[seq[int], seq[int]] =
             markov[key].add(pair)
     return markov
 
-proc generateFromChain(sChain:Table, iterations:int, order:int): seq[int] =
+proc generateFromChain(sChain:Table, iterations:int, order:int): void =
     # Setup a places to store the results
-    var results = seq[int]
+    var res:seq[int]
     
     # Get a random key from the data, rather than the chain
-    var randomPoint = rand(len(someData)-1)
-    var randomSlice = someData[randomPoint..randomPoint + (order-1)]
-    var possibleStates = 
+    let 
+        randomPoint:int = sample(someData)
+        randomSlice:seq[int] = someData[randomPoint..randomPoint + (order-1)]
+    var 
+        possibleStates:seq[int] = sChain[randomSlice]
+        previousStates:seq[int] = randomSlice
+
 
     # Now loop around for some iterations
-    for i 0..iterations:
-        var possibleStates = 
+    for i in 0..iterations:
+        var nextState = sample(possibleStates)
+        
+        #everything 1 from the left + nextState
+        var shift = previousStates[1..previousStates.len()]
+        echo shift
+        shift.insert(nextState, shift.len())
+        echo shift
+        var possibleStates = shift
+        
+        
+        res.add(nextState)
+        if i == 1: quit()
+    echo res 
 
 
 
-    return results
+    # return results
 
     
     
     
-var order = 2
+var order = 4
 var iters = 100
 var chain = buildChain(someData, order)
-discard generateFromChain(chain, iters, order)
+generateFromChain(chain, iters, order)
