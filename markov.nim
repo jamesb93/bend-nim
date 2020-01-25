@@ -35,17 +35,17 @@ proc generateFromChain(sChain:Table, iterations:int, order:int): void =
     # Now loop around for some iterations
     for i in 0..iterations:
         var nextState = sample(possibleStates)
+        echo ("start seed", randomSlice)
+        echo ("possibleStates:", possibleStates)
+        echo ("nextState", nextState)
         
         #everything 1 from the left + nextState
-        var shift = previousStates[1..previousStates.len()]
-        echo shift
-        shift.insert(nextState, shift.len())
-        echo shift
-        var possibleStates = shift
-        
+        var nextKey:seq[int] = previousStates[1..previousStates.len()-1]
+        nextKey.add(nextState)
+        echo nextKey
         
         res.add(nextState)
-        if i == 1: quit()
+        if i == 0: quit()
     echo res 
 
 
