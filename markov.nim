@@ -8,15 +8,22 @@ proc buildChain(inputData:seq[int], order:int): Table[seq[int], seq[int]] =
     var markov = initTable[seq[int], seq[int]]()
 
     # Build the chain
-    for i in 0..(inputData.len()-1) - order:
+    for i in 0..(len(inputData)-1) - order:
         var mem = inputData[i..i+order]
         var key:seq[int] = mem[0..order-1]
-        var pair:seq[int] = @[mem[order]]  
+        var pair:seq[int] = @[mem[order]] 
+        echo key, pair
 
         if not markov.hasKey(key):
             markov[key] = pair
         else:
             markov[key].add(pair)
+    
+    # Create a special key for the final key
+    var specialKey = someData[(len(someData)-order)..len(someData)]
+    markov[specialKey] = @["_END_"]
+    for key, value in markov:
+        echo(key, value)
     return markov
 
 proc generateFromChain(sChain:Table, iterations:int, order:int): void =
@@ -25,27 +32,25 @@ proc generateFromChain(sChain:Table, iterations:int, order:int): void =
     
     # Get a random key from the data, rather than the chain
     let 
-        randomPoint:int = sample(someData)
+        randomPoint:int = rand(0..len(someData))
         randomSlice:seq[int] = someData[randomPoint..randomPoint + (order-1)]
-    var 
-        possibleStates:seq[int] = sChain[randomSlice]
-        previousStates:seq[int] = randomSlice
+    echo randomPoint
+    echo randomPoint+(order-1)
+    var previousStates:seq[int] = randomSlice
 
 
     # Now loop around for some iterations
     for i in 0..iterations:
-        var nextState = sample(possibleStates)
-        echo ("start seed", randomSlice)
-        echo ("possibleStates:", possibleStates)
-        echo ("nextState", nextState)
+         var nextState = sample(
+                sChain[previousStates]
+            )
+        if nextState = 
         
-        #everything 1 from the left + nextState
         var nextKey:seq[int] = previousStates[1..previousStates.len()-1]
         nextKey.add(nextState)
-        echo nextKey
+        previousStates = nextKey
         
         res.add(nextState)
-        if i == 0: quit()
     echo res 
 
 
@@ -55,7 +60,7 @@ proc generateFromChain(sChain:Table, iterations:int, order:int): void =
     
     
     
-var order = 4
-var iters = 100
+var order = 2
+var iters = 3
 var chain = buildChain(someData, order)
 generateFromChain(chain, iters, order)
