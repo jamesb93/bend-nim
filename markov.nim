@@ -1,17 +1,26 @@
 import tables, random
+import readwav
+# Read a Wav file into an array or seq
+
+var someData = wavToArray("C:\\Users\\james\\dev\\nimBend\\short_test.wav")
+
+# pass that to the two markov functions
+# pass the seq of new data to the wav writer
+
+#################################################################
+
 
 randomize()
-var someData = @[1, 2, 1, 1, 2, 1, 2, 3, 4, 1, 2, 3, 4, 3, 4, 2, 1, 2, 3, 4, 5]
 
-proc buildChain(inputData:seq[int], order:int): Table[seq[int], seq[int]] = 
+proc buildChain(inputData:seq[uint8], order:int): Table[seq[uint8], seq[uint8]] = 
     
-    var markov = initTable[seq[int], seq[int]]()
+    var markov = initTable[seq[uint8], seq[uint8]]()
 
     # Build the chain
     for i in 0..(len(inputData)-1) - order:
         var mem = inputData[i..i+order]
-        var key:seq[int] = mem[0..order-1]
-        var pair:seq[int] = @[mem[order]] 
+        var key:seq[uint8] = mem[0..order-1]
+        var pair:seq[uint8] = @[mem[order]] 
 
         if not markov.hasKey(key):
             markov[key] = pair
@@ -21,19 +30,19 @@ proc buildChain(inputData:seq[int], order:int): Table[seq[int], seq[int]] =
     return markov
 
 
-proc generateFromChain(sChain:Table, iterations:int, order:int): seq[int] =
+proc generateFromChain(sChain:Table, iterations:int, order:int): seq[uint8] =
     # Setup a places to store the results
-    var res:seq[int]
+    var res:seq[uint8]
     
     # Get a random key from the data, rather than the chain
     var
         randomPoint:int = rand(0..len(someData)-order-1)
-        randomSlice:seq[int] = someData[randomPoint..randomPoint+(order-1)]
-        previousStates:seq[int] = randomSlice
+        randomSlice:seq[uint8] = someData[randomPoint..randomPoint+(order-1)]
+        previousStates:seq[uint8] = randomSlice
 
     # Now loop around for some iterations
     for i in 0..iterations:
-        var sampleSelection:seq[int]
+        var sampleSelection:seq[uint8]
 
         if sChain.hasKey(previousStates):
             sampleSelection = sChain[previousStates]
@@ -46,23 +55,17 @@ proc generateFromChain(sChain:Table, iterations:int, order:int): seq[int] =
         var nextState = sample(sampleSelection)
         
         
-        var nextKey:seq[int] = previousStates[1..previousStates.len()-1]
+        var nextKey:seq[uint8] = previousStates[1..previousStates.len()-1]
         nextKey.add(nextState)
         previousStates = nextKey
         
         res.add(nextState)
     return res
 
-
-
-
-    # return results
-
     
     
-    
-var order = 3
-var iters = 30
+var order = 8
+var iters = 20 * 44100
 var chain = buildChain(someData, order)
 var resu = generateFromChain(chain, iters, order)
-echo resu
+var result = arrayToWav("C:/Users/james/dev/nimBend/outputTest.wav", resu)
