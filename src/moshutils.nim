@@ -1,4 +1,4 @@
-import memfiles, os, strutils
+import memfiles, os
 import moshwav
 
 type FileType* = enum
@@ -51,8 +51,6 @@ type
         bit1 : uint8
         bit2 : uint8
         bit3 : uint8
-    
-    #uint24_range = range[0'u32 .. 0xFFFFFF'u32]
 
 #https://stackoverflow.com/questions/7416699/how-to-define-24bit-data-type-in-c
 proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
