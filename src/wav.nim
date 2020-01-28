@@ -1,3 +1,5 @@
+import streams, sequtils
+
 const fixedSize : uint32 = 36
 
 type wavHeader* = object
