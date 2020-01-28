@@ -1,5 +1,5 @@
-import memfiles, os, strutils
-import moshwav
+import memfiles, os
+import wav
 
 type FileType* = enum
     file,
@@ -51,8 +51,6 @@ type
         bit1 : uint8
         bit2 : uint8
         bit3 : uint8
-    
-    #uint24_range = range[0'u32 .. 0xFFFFFF'u32]
 
 #https://stackoverflow.com/questions/7416699/how-to-define-24bit-data-type-in-c
 proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
@@ -63,18 +61,6 @@ proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
 
 proc asUnsigned32Bit(obj : uint24_obj) : uint32 =
     return (uint32(obj.bit1)) or (uint32(obj.bit2) shl 8) or (uint32(obj.bit3) shl 16)
-
-#[
-const
-    highestUInt8  : float = float(high(uint8))
-    halfHighestUInt8 : float = highestUInt8 * 0.5
-    highestUInt16 : float = float(high(uint16))
-    halfHighestUInt16 : float = highestUInt16 * 0.5
-    highestUInt24 : float = float(high(uint24_range))
-    halfHighestUInt24 : float = highestUInt24 * 0.5
-    highestUInt32 : float = float(high(uint32))
-    halfHighestUInt32 : float = highestUInt32 * 0.5
-]#
 
 #-- DC Filter --#
 proc applyDCFilter*(dataDC : pointer, dataMem : pointer, dataSize : Natural, bitDepth : uint16) : void =
@@ -178,7 +164,8 @@ proc createOutputFile*(
     dcFilter: bool,
     sampRate: uint32,
     bitDepth: uint16,
-    numChans: uint16) {.thread.} =
+    numChans: uint16,
+    ) {.thread.} =
     
     #-- Process input file > output file --#
     var
@@ -190,7 +177,7 @@ proc createOutputFile*(
         inputDataMem  = inputData.mem
         inputDataSize = inputData.size
         
-        dataDC : pointer 
+        dataDC: pointer 
 
         header: wavHeader = createHeader(
             uint32(inputDataSize),
