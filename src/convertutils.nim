@@ -1,5 +1,5 @@
 import memfiles, os
-import moshwav
+import wav
 
 type FileType* = enum
     file,
@@ -165,7 +165,6 @@ proc createOutputFile*(
     sampRate: uint32,
     bitDepth: uint16,
     numChans: uint16,
-    generate: bool
     ) {.thread.} =
     
     #-- Process input file > output file --#
