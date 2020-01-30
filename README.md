@@ -1,9 +1,9 @@
-# nimBend
+# mosh
 
-nimBend is a small command-line application written in Nim. The application converts any input file to a WAVE audio file given parameters for bit-depth, sampling rate and number of channels. 
+mosh is a small command-line application written in Nim for 'moshing' data into audio. There is also an experimental markov-based synthesiser that can help you generate audio based on the results of your conversion process.
 
 
-nimBend is fast, small and bare bones and can be compiled to any platform that Nim can compile to. This includes MacOS, Windows, Linux, iOS, Android.
+mosh is fast, small and bare bones and can be compiled to any platform that Nim can compile to. This includes MacOS, Windows, Linux, iOS, Android.
 
 
 This project stems from my own perverse use of [SoX](http://sox.sourceforge.net) to _bend_ raw data into audio with the command:
@@ -17,17 +17,29 @@ I wanted to write a small application that could implement this functionality bu
 [Francesco Cameli](github.com/vitreo12) is a significant contributor, particularly in optimising the code to be fast (from 100ms to less than 5ms!). I'd like to also thank him for his patience and guidance on all things Nim.
 
 
-## Installing
+# Installation
 
 Installation is simple. `git clone` this repo, `cd` to it and run the following `nimble` command:
 
 `nimble installRelease`
 
-The command will install all nimBend's executables in your predefined `nimble` directory. (Usually, ~/.nimble/bin)
+The command will install all mosh's executables in your predefined `nimble` directory. (Usually, ~/.nimble/bin)
 
-## Usage
+You can also build it however you like with something like `nim c --threads:on mosh.nim`.
 
-Right now, the nimBend executable `mosh` only takes two arguments, an input file/folder and an output file/folder name. Example:
+# Usage
+
+
+The mosh executable `mosh` takes a first argument that defines what sub-command you would like to run (either `convert` or `generate`).
+
+
+## convert
+---
+
+In convert mode, you can pass a folder or file as the input and the executable will convert all files in the folder recursively or a single file and place it at the output which is a directory or file.
+
+
+ an input file/folder and an output file/folder name. Example:
 
 `mosh cat.png output.wav`
 
@@ -37,7 +49,21 @@ or
 
 `mosh foo bar`
 
-Which would convert all the files inside the directory `foo` recursively into a new folder called `bar`
+Which would convert all the files inside the directory `foo` recursively into a new folder called `bar`.
 
+## generate
+---
+
+To generate some more audio based on an output you can use the `generate` command which uses a markov chain analysis to construct a state graph of the values in the output audio. This only works on 8-bit audio right now, and probably won't work well on anything above this due to the sheer increase in possible values by moving above an 8-bit representation.
+
+An example execution would look something like:
+
+`mosh generate -i inputfile.wav -o outputfile.wav --order 32 --length 10`.
+
+## Help and issues
+---
+
+
+Detailed help can be found by running `mosh -h` or `mosh convert -h` or `mosh generate -h`.
 
 If you have any issues or questions please raise one on the github!
