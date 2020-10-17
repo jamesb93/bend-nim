@@ -1,5 +1,4 @@
 import convert, markov
-import cligen
 
 proc convert(
     input:string,
@@ -20,8 +19,10 @@ proc markov(
 ): void= doMarkov(input,output,order,length)
 
 when isMainModule:
+    import cligen
     dispatchMulti(
-        [convert, help={
+        [convert, 
+        help={
             "input" : "An input to process. This can be a folder or file containing data.",
             "output" : "An output to render to. This can be a folder of, or single wav.",
             "bitDepth" : "The bit depth to render to.",
@@ -29,7 +30,7 @@ when isMainModule:
             "sampRate" : "The sample rate of the output file(s).",
             "limit" : "The amount of data to scrape if working with directories.",
             "maxSize" : "The maximum size of any single file in directory mode.",
-            "dcFilter" : "If true, apply a DC Filter. Often the conversion process is DC agnostic."
+            "dcFilter" : "If true, apply a DC Filter. Conversion often produces lots of DC."
         }],
         [markov, help={
             "input" : "A input file to process. Should be audio full of 8 bit unsigned integers.",
