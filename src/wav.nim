@@ -83,7 +83,6 @@ proc wavToArray*(filePath: string): seq[uint8]=
     while subChunk1ID != "fmt ":
         subChunk1ID = readStr(data, 4)
     assert subChunk1ID == "fmt "
-    # var subChunk1ID = readStr(data, 4)
     var subChunk1Size = readUint32(data)
     var audioFormat = readUint16(data)
     var numChannels = readUint16(data)
