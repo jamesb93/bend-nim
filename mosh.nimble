@@ -1,13 +1,13 @@
-version       = "0.2.0"
+version       = "0.3.0"
 author        = "James Bradbury"
-description   = "nimBend can turn any input file into audio files in the wav format. It also has functionality for generating new 8bit audio with Markov processes."
+description   = "mosh can turn any input file into audio files in the wav format. It also has functionality for generating new 8bit audio with Markov processes."
 license       = "MIT"
 
 srcDir = "src"
 bin    = @["mosh"]
 
-requires "nim >= 1.0.0"
-requires "cligen"
+requires "nim >= 1.4.0"
+requires "cligen == 1.2.2"
 
 #Manual buildRelease
 task buildRelease, "Builds nimBend with -d:release and -d:danger":
