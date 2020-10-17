@@ -26,9 +26,9 @@ proc checkMake*(filePath: string) : void =
         echo filePath, " did not exist and was created for you."
         
 proc discernFile*(filePath: string) : FileType = 
-    if filePath.existsFile():
+    if filePath.fileExists():
         return file
-    elif filePath.existsDir():
+    elif filePath.dirExists():
         return dir
     else:
         return none
