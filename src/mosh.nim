@@ -1,4 +1,4 @@
-import convert, cligen
+import convert
 
 proc convert(
     input:string, output:string,
@@ -11,11 +11,12 @@ proc convert(
 ): void = doConvert(input,output,bitDepth,numChans,sampRate,limit,maxSize,dcFilter)
 
 when isMainModule:
+    import cligen
     dispatch(
         convert,
         help = {
             "input" : "An input to process. This can be a folder or file containing data.",
-            "output" : "An output to render to. This can be a folder of, or single wav.",
+            "output" : "An output to render to. This can be a folder or a file.",
             "bitDepth" : "The bit depth to render to.",
             "numChans" : "The number of channels to write to.",
             "input" : "A input file to process. Should be audio full of 8 bit unsigned integers.",
