@@ -29,14 +29,7 @@ You can also build it however you like with something like `nim c --threads:on m
 
 # Usage
 
-
-The mosh executable `mosh` takes a first argument that defines what sub-command you would like to run (either `convert` or `generate`).
-
-
-## convert
----
-
-In convert mode, you can pass a folder or file as the input and the executable will convert all files in the folder recursively or a single file and place it at the output which is a directory or file.
+You can pass a folder or file as the input and the executable will convert all files in the folder recursively or a single file and place it at the output which is a directory or file.
 
 
  an input file/folder and an output file/folder name. Example:
@@ -50,15 +43,6 @@ or
 `mosh foo bar`
 
 Which would convert all the files inside the directory `foo` recursively into a new folder called `bar`.
-
-## generate
----
-
-To generate some more audio based on an output you can use the `generate` command which uses a markov chain analysis to construct a state graph of the values in the output audio. This only works on 8-bit audio right now, and probably won't work well on anything above this due to the sheer increase in possible values by moving above an 8-bit representation.
-
-An example execution would look something like:
-
-`mosh generate -i inputfile.wav -o outputfile.wav --order 32 --length 10`.
 
 ## Help and issues
 ---
