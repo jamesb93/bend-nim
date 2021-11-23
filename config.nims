@@ -14,6 +14,7 @@
 --nilchecks:off
 
 #release
+--gc:orc
 --define:release
 --excessiveStackTrace:off
 --opt:speed
