@@ -14,11 +14,13 @@ proc conversion*(
     dc:bool=true
 ): void =
 
+    let iPath = sanitisePath(input)
+    let oPath = sanitisePath(output)
     #-- Discern the input/output information --#
-    let iType: FileType = discernFile(input)
+    let iType: FileType = discernFile(iPath)
 
     #-- Make sure that the input and output are not the same file --#
-    if sameFile(input, output):
+    if sameFile(iPath, oPath):
         echo "You cannot set the same input and output file for safety reasons"
         quit()
 
@@ -29,10 +31,10 @@ proc conversion*(
         
     #-- Operate on single files --#
     if iType == file:
-        if getFileSize(input) != 0:
+        if getFileSize(iPath) != 0:
             createOutputFile(
-                input, 
-                output, 
+                iPath, 
+                oPath, 
                 dc, 
                 sampRate,
                 bitDepth,
@@ -44,15 +46,14 @@ proc conversion*(
 
     #-- Operate on folders --#
     if iType == dir:
-        var outputDir: string = absolutePath(output)
         var progressMb: float = 0
 
         for inputFilePath in walkDirRec(input):
             if progressMb < limit:
-                if inputFilePath.parentDir() != output:
+                if inputFilePath.parentDir() != oPath:
                     var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
                     if sizeMb < maxSize and sizeMb != 0: # Check for size boundaries
-                        var outputFilePath = outputDir / inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
+                        var outputFilePath = oPath / inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
                         parallel: spawn createOutputFile(
                             inputFilePath,
                             outputFilePath, 
