@@ -18,14 +18,14 @@ proc conversion*(
     let iType: FileType = discernFile(input)
 
     #-- Make sure that the input and output are not the same file --#
-    if input == output:
+    if sameFile(input, output):
         echo "You cannot set the same input and output file for safety reasons"
         quit()
 
     #-- Make the output directory if it does not exist --#
     if iType == dir: 
         checkMake(output)
-        let oType: FileType = output.discernFile()
+        # let oType: FileType = output.discernFile()
         
     #-- Operate on single files --#
     if iType == file:
