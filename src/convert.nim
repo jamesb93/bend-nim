@@ -2,15 +2,15 @@ import os, system, threadpool
 import convertutils
 {. experimental: "parallel" .}
 
-proc doConvert*(
+proc conversion*(
     input:string,
     output:string,
-    bitDepth:uint16,
-    numChans:uint16,
-    sampRate:uint32,
-    limit:float,
-    maxSize:float,
-    dcFilter:bool,
+    bitDepth:uint16=8,
+    numChans:uint16=1,
+    sampRate:uint32=44100,
+    limit:float=5000,
+    maxSize:float=4096,
+    dc:bool=true
 ): void =
 
     #-- Discern the input/output information --#
@@ -32,7 +32,7 @@ proc doConvert*(
             createOutputFile(
                 input, 
                 output, 
-                dcFilter, 
+                dc, 
                 sampRate,
                 bitDepth,
                 numChans,
@@ -55,7 +55,7 @@ proc doConvert*(
                         parallel: spawn createOutputFile(
                             inputFilePath,
                             outputFilePath, 
-                            dcFilter, 
+                            dc, 
                             sampRate,
                             bitDepth,
                             numChans
