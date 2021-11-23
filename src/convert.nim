@@ -1,4 +1,5 @@
-import os, system, threadpool
+import std/[os, threadpool]
+import system
 import convertutils
 {. experimental: "parallel" .}
 
