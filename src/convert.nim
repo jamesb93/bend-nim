@@ -1,17 +1,16 @@
-import std/[os, threadpool]
-import system
+import std/[os, threadpool, terminal, strformat, math], system
 import convertutils
 {. experimental: "parallel" .}
 
-proc conversion*(
-    input:string,
-    output:string,
-    bitDepth:uint16=8,
-    numChans:uint16=1,
-    sampRate:uint32=44100,
-    limit:float=5000,
-    maxSize:float=4096,
-    dc:bool=true
+proc conversion*( 
+    input: string,
+    output: string,
+    bitDepth: uint16 = 8,
+    numChans: uint16 = 1,
+    sampRate: uint32 = 44100,
+    limit: float = 5000,
+    maxSize: float = 4096,
+    dc: bool = true
 ): void =
 
     let iPath = sanitisePath(input)
@@ -19,16 +18,15 @@ proc conversion*(
     #-- Discern the input/output information --#
     let iType: FileType = discernFile(iPath)
 
+    #-- Make the output directory if it does not exist --#
+    if iType == dir: 
+        checkMake(output)
+
     #-- Make sure that the input and output are not the same file --#
     if sameFile(iPath, oPath):
         echo "You cannot set the same input and output file for safety reasons"
         quit()
 
-    #-- Make the output directory if it does not exist --#
-    if iType == dir: 
-        checkMake(output)
-        # let oType: FileType = output.discernFile()
-        
     #-- Operate on single files --#
     if iType == file:
         if getFileSize(iPath) != 0:
@@ -46,23 +44,37 @@ proc conversion*(
 
     #-- Operate on folders --#
     if iType == dir:
-        var progressMb: float = 0
+        var mbAccum: float = 0
+        var files: seq[string]
 
         for inputFilePath in walkDirRec(input):
-            if progressMb < limit:
-                if inputFilePath.parentDir() != oPath:
-                    var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float #to mb
+            if mbAccum < limit and inputFilePath.parentDir() != oPath:
+                try:
+                    var sizeMb = getFileSize(inputFilePath).float / (1024 * 1024).float # to mb
                     if sizeMb < maxSize and sizeMb != 0: # Check for size boundaries
-                        var outputFilePath = oPath / inputFilePath.extractFilename().formatDotFile().changeFileExt("wav")
-                        parallel: spawn createOutputFile(
-                            inputFilePath,
-                            outputFilePath, 
-                            dc, 
-                            sampRate,
-                            bitDepth,
-                            numChans
-                        )
-                        progressMb += sizeMb
+                        files.add(inputFilePath)
+                        mbAccum += sizeMb
+                except OSError:
+                    discard
+
+
+        for i, iFile in files:
+            # Terminal Writing
+            let percentage: float = round((i / files.len) * 100.0)
+            stdout.eraseLine()
+            stdout.write(percentage)
+            stdout.flushFile
+
+            var oFile = oPath / iFile.extractFilename().formatDotFile().changeFileExt("wav")
+            if not fileExists(oFile):
+                parallel: spawn createOutputFile(
+                    iFile,
+                    oFile, 
+                    dc, 
+                    sampRate,
+                    bitDepth,
+                    numChans
+                )
 
     if iType == none:
         echo "There was an error with your input or output arguments."

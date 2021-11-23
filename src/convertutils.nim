@@ -11,17 +11,9 @@ proc formatDotFile*(input: string): string =
         return input[1..^1] 
     else: 
         return input
-
-#-- Deal with bad folder inputs --#
-proc exists(p: string): bool =
-    try:
-        discard getFileInfo(p)
-        result = true
-    except OSError:
-        result = false
     
 proc checkMake*(path: string) : void =
-    if not exists(path):
+    if not dirExists(path):
         createDir(path)
         echo path, " did not exist and was created for you."
         
