@@ -4,6 +4,8 @@ from std/tables import toTable
 when isMainModule:
     import cligen
 
+    clCfg.version = "0.5.0"
+
     const Help = {
             "input" : "Input folder or file containing data.",
             "output" : "Output folder or a file.",
