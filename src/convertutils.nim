@@ -20,15 +20,15 @@ proc exists(p: string): bool =
     except OSError:
         result = false
     
-proc checkMake*(filePath: string) : void =
-    if not exists(filePath):
-        createDir(filePath)
-        echo filePath, " did not exist and was created for you."
+proc checkMake*(path: string) : void =
+    if not exists(path):
+        createDir(path)
+        echo path, " did not exist and was created for you."
         
-proc discernFile*(filePath: string) : FileType = 
-    if filePath.fileExists():
+proc discernFile*(path: string) : FileType = 
+    if fileExists(path):
         return file
-    elif filePath.dirExists():
+    elif dirExists(path):
         return dir
     else:
         return none
@@ -41,8 +41,8 @@ proc ensureParity*(input: FileType, output: FileType) : bool =
         echo "They should both be either a file or folder."
         return false
 
-proc openRawFile*(filePath: string) : MemFile =
-    return memfiles.open(filePath, fmRead)
+proc openRawFile*(path: string) : MemFile =
+    return memfiles.open(path, fmRead)
 
 #-- 24 bit unsigned int --#
 type 
@@ -218,6 +218,6 @@ proc createOutputFile*(
     else:
         discard outputFile.writeBuffer(inputDataMem, inputDataSize)
 
-    #Close files
+    # Close files
     outputFile.close()
     inputData.close()
