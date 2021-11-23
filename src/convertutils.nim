@@ -1,5 +1,5 @@
 import memfiles, os
-import wav
+import wav, unsignedint24
 
 type FileType* = enum
     file,
@@ -47,119 +47,45 @@ proc ensureParity*(input: FileType, output: FileType) : bool =
 proc openRawFile*(path: string) : MemFile =
     return memfiles.open(path, fmRead)
 
-#-- 24 bit unsigned int --#
-type 
-    ## This type represents an unsigned 24 bit integer
-    uint24_obj {.packed.} = object
-        bit1 : uint8
-        bit2 : uint8
-        bit3 : uint8
-
-#https://stackoverflow.com/questions/7416699/how-to-define-24bit-data-type-in-c
-proc assignUInt24(obj : var uint24_obj, val : SomeUnsignedInt) =
-    #Store as little endian (the way WAV wants it)
-    obj.bit3 = uint8(val shr 16 and 0xff)
-    obj.bit2 = uint8(val shr 8 and 0xff)
-    obj.bit1 = uint8(val and 0xff)
-
-proc asUnsigned32Bit(obj : uint24_obj) : uint32 =
-    return (uint32(obj.bit1)) or (uint32(obj.bit2) shl 8) or (uint32(obj.bit3) shl 16)
-
-#-- DC Filter --#
-proc applyDCFilter*(dataDC : pointer, dataMem : pointer, dataSize : Natural, bitDepth : uint16) : void =
-
-    #Use floating point operations for precision (and ease of calcs)
+proc applyDCFilter*(dataDC : pointer, dataMem : pointer, dataSize : Natural, bitDepth : typedesc) : void =
     var 
-        xPrev : float = 0.0
-        yPrev : float = 0.0
+        xPrev = 0.0
+        yPrev = 0.0
+        dataArr   = cast[ptr UncheckedArray[bitDepth]](dataMem)
+        dataDCArr = cast[ptr UncheckedArray[bitDepth]](dataDC)
 
-    let filterFB : float = 0.995
+    let
+        filterFB = 0.995
+        scaleAmplitude = 0.4
 
-    #Should be this applied on x (input), or y (output)?
-    let scaleAmplitude : float = 0.4
+    when bitDepth is uint8:
+        let scaledSize = dataSize
+    elif bitDepth is uint16:
+        let scaledSize = int(dataSize / 2)
+    elif bitDepth is uint24:
+        let scaledSize = int(dataSize / 3)
+    elif bitDepth is uint32:
+        let scaledSize = int(dataSize / 4)
+    else:
+        {.fatal: "Invalid unsigned int type: " & $T.}
 
-    case bitDepth:
-        of 8:
-            var dataArr   = cast[ptr UncheckedArray[uint8]](dataMem)
-            var dataDCArr = cast[ptr UncheckedArray[uint8]](dataDC)
-
-            let scaledSize = dataSize - 1
-
-            for index in 0..scaledSize:
-                let x : float = float(dataArr[index]) # - halfHighestUInt8
-                let y : float = x - xPrev + (filterFB * yPrev)
-                xPrev = x
-                yPrev = y
-
-                #Scale output result.. these should in theory be scaled to min/max of uint8 range
-                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt8
-                
-                #Re-write the results over to the dataDC array
-                dataDCArr[index] = uint8(finalOut)
-
-        of 16:
-            var dataArr   = cast[ptr UncheckedArray[uint16]](dataMem)
-            var dataDCArr = cast[ptr UncheckedArray[uint16]](dataDC)
-
-            #account for bigger chunks of memory to read
-            let scaledSize = int(dataSize / 2) - 1
-
-            for index in 0..scaledSize:
-                let x : float = float(dataArr[index]) #- halfHighestUInt16
-                let y : float = x - xPrev + (filterFB * yPrev)
-                xPrev = x
-                yPrev = y
-
-                #Scale output result.. these should in theory be scaled to min/max of uint16 range
-                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt16
-                
-                #Re-write the results over to the dataDC array
-                dataDCArr[index] = uint16(finalOut)
-        
-        of 24:
-            var dataArr   = cast[ptr UncheckedArray[uint24_obj]](dataMem)
-            var dataDCArr = cast[ptr UncheckedArray[uint24_obj]](dataDC)
-
-            #account for bigger chunks of memory to read
-            let scaledSize = int(dataSize / 3) - 1
-
-            for index in 0..scaledSize:
-                let xUnpacked : float = float(dataArr[index].asUnsigned32Bit)
-                let x : float = xUnpacked # - halfHighestUInt24
-                let y : float = x - xPrev + (filterFB * yPrev)
-                
-                xPrev = x
-                yPrev = y
-
-                #Scale output result.. these should in theory be scaled to min/max of uint24 range
-                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt24
-
-                var finalOut24bit : uint24_obj
-                finalOut24bit.assignUInt24(uint32(finalOut))
-
-                #Re-write the results over to the dataDC array
-                dataDCArr[index] = finalOut24bit
-
-        of 32:
-            var dataArr   = cast[ptr UncheckedArray[uint32]](dataMem)
-            var dataDCArr = cast[ptr UncheckedArray[uint32]](dataDC)
-            
-            #account for bigger chunks of memory to read
-            let scaledSize = int(dataSize / 4) - 1
-
-            for index in 0..scaledSize:
-                let x : float = float(dataArr[index]) # - halfHighestUInt32
-                let y : float = x - xPrev + (filterFB * yPrev)
-                xPrev = x
-                yPrev = y
-
-                #Scale output result.. these should in theory be scaled to min/max of uint32 range
-                let finalOut : float = (y * scaleAmplitude) # + halfHighestUInt32
-                
-                #Re-write the results over to the dataDC array
-                dataDCArr[index] = uint32(finalOut)
+    for index in 0..<scaledSize:
+        when bitDepth is uint24:
+            let x = float(dataArr[index].asUnsigned32Bit)
         else:
-            discard
+            let x = float(dataArr[index])
+        let y = x - xPrev + (filterFB * yPrev)
+        xPrev = x
+        yPrev = y
+
+        #Scale output result
+        when bitDepth is uint24:
+            let finalOut = assignUInt24(uint(y * scaleAmplitude))
+        else:
+            let finalOut = y * scaleAmplitude
+        
+        #Re-write the results over to the dataDC array
+        dataDCArr[index] = bitDepth(finalOut)
 
 proc createOutputFile*(
     inputFilePath: string,
@@ -204,7 +130,18 @@ proc createOutputFile*(
             echo "ERROR: Could not allocate data for DC filter"
             return
 
-        dataDC.applyDCFilter(inputDataMem, inputDataSize, bitDepth)
+        case bitDepth:
+            of 8:
+                dataDC.applyDCFilter(inputDataMem, inputDataSize, uint8)
+            of 16:
+                dataDC.applyDCFilter(inputDataMem, inputDataSize, uint16)
+            of 24:
+                dataDC.applyDCFilter(inputDataMem, inputDataSize, uint24)
+            of 32:
+                dataDC.applyDCFilter(inputDataMem, inputDataSize, uint32)
+            else: 
+                echo "ERROR: Invalid bitDepth: ", $bitDepth
+                return
 
     #-- Write header --#
     for value in header.fields:
