@@ -173,9 +173,9 @@ proc createOutputFile*(
     #-- Process input file > output file --#
     var
         inputData: MemFile = memfiles.open(
-            absolutePath(inputFilePath), 
+            inputFilePath,
             fmRead
-            )
+        )
             
         inputDataMem  = inputData.mem
         inputDataSize = inputData.size
