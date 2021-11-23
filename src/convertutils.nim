@@ -33,6 +33,9 @@ proc discernFile*(path: string) : FileType =
     else:
         return none
 
+proc sanitisePath*(path: string) : string =
+    return path.normalizedPath().expandTilde().absolutePath()
+
 proc ensureParity*(input: FileType, output: FileType) : bool =
     if input == output:
         return true
