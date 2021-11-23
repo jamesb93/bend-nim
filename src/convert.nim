@@ -15,7 +15,7 @@ proc conversion*(
 ): void =
 
     #-- Discern the input/output information --#
-    let iType: FileType = input.discernFile()
+    let iType: FileType = discernFile(input)
 
     #-- Make sure that the input and output are not the same file --#
     if input == output:
@@ -44,7 +44,7 @@ proc conversion*(
 
     #-- Operate on folders --#
     if iType == dir:
-        var outputDir: string = output.absolutePath()
+        var outputDir: string = absolutePath(output)
         var progressMb: float = 0
 
         for inputFilePath in walkDirRec(input):
