@@ -21,11 +21,9 @@ I wanted to write a small application that could implement this functionality bu
 
 Installation is simple. `git clone` this repo, `cd` to it and run the following `nimble` command:
 
-`nimble installRelease`
+`nimble install`
 
-The command will install all mosh's executables in your predefined `nimble` directory. (Usually, ~/.nimble/bin)
-
-You can also build it however you like with something like `nim c --threads:on mosh.nim`.
+This will give you an executable inside the project folder that you can use in place or move to your `$PATH`.
 
 # Usage
 
