@@ -1,4 +1,4 @@
-import std/[os, threadpool, terminal, strformat, math], system
+import std/[os, threadpool, terminal, math], system
 import convertutils
 {. experimental: "parallel" .}
 

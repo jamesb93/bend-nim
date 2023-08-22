@@ -1,9 +1,9 @@
-# mosh
+# bend
 
-mosh is a small command-line application written in Nim for 'moshing' data into audio. There is also an experimental markov-based synthesiser that can help you generate audio based on the results of your conversion process.
+bend is a small command-line application written in Nim for 'bending' data into audio. There is also an experimental markov-based synthesiser that can help you generate audio based on the results of your conversion process.
 
 
-mosh is fast, small and bare bones and can be compiled to any platform that Nim can compile to. This includes MacOS, Windows, Linux, iOS, Android.
+bend is fast, small and bare bones and can be compiled to any platform that Nim can compile to. This includes MacOS, Windows, Linux, iOS, Android.
 
 
 This project stems from my own perverse use of [SoX](http://sox.sourceforge.net) to _bend_ raw data into audio with the command:
@@ -32,13 +32,13 @@ You can pass a folder or file as the input and the executable will convert all f
 
  an input file/folder and an output file/folder name. Example:
 
-`mosh cat.png output.wav`
+`bend cat.png output.wav`
 
 Which could convert the `cat.png` file to a new wav file `output.wav`.
 
 or
 
-`mosh foo bar`
+`bend foo bar`
 
 Which would convert all the files inside the directory `foo` recursively into a new folder called `bar`.
 
@@ -46,6 +46,6 @@ Which would convert all the files inside the directory `foo` recursively into a 
 ---
 
 
-Detailed help can be found by running `mosh -h` or `mosh convert -h` or `mosh generate -h`.
+Detailed help can be found by running `bend -h` or `bend convert -h` or `bend generate -h`.
 
 If you have any issues or questions please raise one on the github!
