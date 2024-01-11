@@ -19,7 +19,9 @@ I wanted to write a small application that could implement this functionality bu
 
 # Installation
 
-Installation is simple. `git clone` this repo, `cd` to it and run the following `nimble` command:
+First, it is most convenient to have access to the `nim` compiler as well as `nimble`. To install both of these you can use [choosenim](https://github.com/dom96/choosenim#installation).
+
+Once you have `choosenim` you can `git clone` this repo, `cd` to it and run the following `nimble` command:
 
 `nimble install`
 
