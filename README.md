@@ -1,3 +1,5 @@
+This repository is now archived. Please use https://github.com/jamesb93/bend-rust
+
 # bend
 
 bend is a small command-line application written in Nim for 'bending' data into audio. There is also an experimental markov-based synthesiser that can help you generate audio based on the results of your conversion process.
